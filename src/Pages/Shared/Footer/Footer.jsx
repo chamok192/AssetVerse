@@ -6,7 +6,7 @@ const Footer = () => {
     const year = new Date().getFullYear();
     return (
         <div>
-            <footer className="footer sm:footer-horizontal bg-base-200 text-base-content p-10">
+            <footer className="footer sm:footer-horizontal bg-linear-to-b from-slate-900 via-black to-slate-950 text-white p-10 rounded-t-lg">
 
                 <aside>
                     <Logo></Logo>
@@ -17,18 +17,18 @@ const Footer = () => {
                     </p>
                 </aside>
                 <nav>
-                    <h6 className="footer-title">Quick Navigation</h6>
-                    <Link className="link link-hover" to="/">Home</Link>
-                    <Link className="link link-hover" to="/join/employee">Join as Employee</Link>
-                    <Link className="link link-hover" to="/join/hr-manager">Join as HR Manager</Link>
+                    <h6 className="footer-title text-white">Quick Navigation</h6>
+                    <Link className="link link-hover text-white/80 hover:text-white" to="/">Home</Link>
+                    <Link className="link link-hover text-white/80 hover:text-white" to="/join/employee">Join as Employee</Link>
+                    <Link className="link link-hover text-white/80 hover:text-white" to="/join/hr-manager">Join as HR Manager</Link>
                 </nav>
                 <nav>
-                    <h6 className="footer-title">Contact</h6>
-                    <a className="link link-hover" href="mailto:support@assetverse.com">support@assetverse.com</a>
-                    <a className="link link-hover" href="tel:+1234567890">+1 (234) 567-890</a>
+                    <h6 className="footer-title text-white">Contact</h6>
+                    <a className="link link-hover text-white/80 hover:text-white" href="mailto:support@assetverse.com">support@assetverse.com</a>
+                    <a className="link link-hover text-white/80 hover:text-white" href="tel:+1234567890">+1 (234) 567-890</a>
                 </nav>
                 <nav>
-                    <h6 className="footer-title">Social Media</h6>
+                    <h6 className="footer-title text-white">Social Media</h6>
                     <div className="grid grid-flow-col gap-4">
                         <a aria-label="Twitter" href="#" target="_blank" rel="noreferrer noopener">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="fill-current">
@@ -48,7 +48,7 @@ const Footer = () => {
                     </div>
                 </nav>
             </footer>
-            <footer className="footer bg-base-200 text-base-content border-base-300 border-t px-10 py-4">
+            <footer className="footer bg-linear-to-r from-slate-900 via-black to-slate-950 text-white border-slate-800 border-t px-10 py-4">
                 <aside className="grid-flow-col items-center mx-auto">
                     <p>© {year} AssetVerse. All rights reserved.</p>
                 </aside>
