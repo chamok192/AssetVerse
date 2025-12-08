@@ -3,6 +3,7 @@ import RootLayout from "../RootLayout/RootLayout";
 import Home from "../Pages/Home/Home";
 import Employee from "../Pages/Join/Employee";
 import HRManager from "../Pages/Join/HRManager";
+import ErrorPage from "../Pages/Error/ErrorPage";
 
 export const router = createBrowserRouter([
     {
@@ -20,7 +21,15 @@ export const router = createBrowserRouter([
             {
                 path: "join/hr-manager",
                 Component: HRManager
+            },
+            {
+                path: "*",
+                Component: ErrorPage
             }
         ]
     },
+    {
+        path: "*",
+        Component: ErrorPage
+    }
 ]);
