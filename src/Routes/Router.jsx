@@ -4,6 +4,7 @@ import Home from "../Pages/Home/Home";
 import Employee from "../Pages/Join/Employee";
 import HRManager from "../Pages/Join/HRManager";
 import ErrorPage from "../Pages/Error/ErrorPage";
+import Login from "../Pages/Login/Login";
 
 export const router = createBrowserRouter([
     {
@@ -13,6 +14,10 @@ export const router = createBrowserRouter([
             {
                 index: true,
                 Component:Home
+            },
+            {
+                path: "login",
+                Component: Login
             },
             {
                 path: "join/employee",

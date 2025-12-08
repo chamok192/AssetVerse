@@ -26,11 +26,7 @@ const hrManagerMenu = [
 ];
 
 const Nav = () => {
-    const user = {
-        name: 'Chamok Bhadra',
-        role: 'employee',
-        avatar: 'https://i.ibb.co/2kR6ghD/chamok.jpg'
-    };
+    const user = null;
 
     const handleLogout = () => {
         return null;
@@ -85,6 +81,9 @@ const Nav = () => {
                 </ul>
             </div>
             <div className="navbar-end gap-3">
+                {!user && (
+                    <Link to="/login" className="btn btn-neutral">Login</Link>
+                )}
                 {user && (
                     <div className="dropdown dropdown-end">
                         <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
