@@ -1,6 +1,6 @@
 import React from 'react';
 import Logo from '../../../Components/Logo/Logo';
-import { Link } from 'react-router';
+import { Link, NavLink } from 'react-router';
 
 const publicLinks = [
     { label: 'Home', to: '/' },
@@ -38,10 +38,12 @@ const Nav = () => {
 
     const roleMenu = user?.role === 'hr-manager' ? hrManagerMenu : employeeMenu;
 
+    const linkClass = ({ isActive }) => isActive ? 'active text-base-content font-semibold' : 'text-base-content/70';
+
     const renderMenuItems = (items) => items.map((item) => (
         <li key={item.label}>
             {item.to ? (
-                <Link to={item.to}>{item.label}</Link>
+                <NavLink to={item.to} className={linkClass}>{item.label}</NavLink>
             ) : (
                 <button type="button" onClick={handleLogout}>{item.label}</button>
             )}
@@ -61,7 +63,7 @@ const Nav = () => {
                         tabIndex={0}
                         className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-56 p-2 shadow">
                         {publicLinks.map((item) => (
-                            <li key={item.label}><Link to={item.to}>{item.label}</Link></li>
+                            <li key={item.label}><NavLink to={item.to} className={linkClass}>{item.label}</NavLink></li>
                         ))}
                         {user && (
                             <>
@@ -78,7 +80,7 @@ const Nav = () => {
             <div className="navbar-center hidden lg:flex">
                 <ul className="menu menu-horizontal px-1 gap-2">
                     {publicLinks.map((item) => (
-                        <li key={item.label}><Link to={item.to}>{item.label}</Link></li>
+                        <li key={item.label}><NavLink to={item.to} className={linkClass}>{item.label}</NavLink></li>
                     ))}
                 </ul>
             </div>
