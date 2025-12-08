@@ -2,9 +2,54 @@ import React from 'react';
 import Logo from '../../../Components/Logo/Logo';
 import { Link } from 'react-router';
 
+const publicLinks = [
+    { label: 'Home', to: '/' },
+    { label: 'Join as Employee', to: '/join/employee' },
+    { label: 'Join as HR Manager', to: '/join/hr-manager' }
+];
+
+const employeeMenu = [
+    { label: 'My Assets', to: '/employee/assets' },
+    { label: 'My Team', to: '/employee/team' },
+    { label: 'Request Asset', to: '/employee/request' },
+    { label: 'Profile', to: '/profile' },
+    { label: 'Logout', action: 'logout' }
+];
+
+const hrManagerMenu = [
+    { label: 'Asset List', to: '/hr/assets' },
+    { label: 'Add Asset', to: '/hr/assets/new' },
+    { label: 'All Requests', to: '/hr/requests' },
+    { label: 'Employee List', to: '/hr/employees' },
+    { label: 'Profile', to: '/profile' },
+    { label: 'Logout', action: 'logout' }
+];
+
 const Nav = () => {
+    const user = {
+        name: 'Chamok Bhadra',
+        role: 'employee',
+        avatar: 'https://i.ibb.co/2kR6ghD/chamok.jpg'
+    };
+
+    const handleLogout = () => {
+        return null;
+    };
+
+    const roleMenu = user?.role === 'hr-manager' ? hrManagerMenu : employeeMenu;
+
+    const renderMenuItems = (items) => items.map((item) => (
+        <li key={item.label}>
+            {item.to ? (
+                <Link to={item.to}>{item.label}</Link>
+            ) : (
+                <button type="button" onClick={handleLogout}>{item.label}</button>
+            )}
+        </li>
+    ));
+
     return (
-        <div className="navbar bg-base-100 shadow-sm">
+        <div className="navbar bg-base-100 shadow-sm sticky top-0 z-50">
             <div className="navbar-start">
                 <div className="dropdown">
                     <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
@@ -13,71 +58,44 @@ const Nav = () => {
                         </svg>
                     </div>
                     <ul
-                        tabIndex="-1"
-                        className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-64 p-2 shadow">
-                        <li className="menu-title">Public Links</li>
-                        <li><Link to="/">Home</Link></li>
-                        <li><Link to="/join/employee">Join as Employee</Link></li>
-                        <li><Link to="/join/hr-manager">Join as HR Manager</Link></li>
-                        <li className="divider"></li>
-                        <li className="menu-title">Join as Employee</li>
-                        <li><button>My Assets</button></li>
-                        <li><button>My Team</button></li>
-                        <li><button>Request Asset</button></li>
-                        <li><button>Profile</button></li>
-                        <li><button>Logout</button></li>
-                        <li className="divider"></li>
-                        <li className="menu-title">Join as HR Manager</li>
-                        <li><button>Asset List</button></li>
-                        <li><button>Add Asset</button></li>
-                        <li><button>All Requests</button></li>
-                        <li><button>Employee List</button></li>
-                        <li><button>Profile</button></li>
-                        <li><button>Logout</button></li>
+                        tabIndex={0}
+                        className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-56 p-2 shadow">
+                        {publicLinks.map((item) => (
+                            <li key={item.label}><Link to={item.to}>{item.label}</Link></li>
+                        ))}
+                        {user && (
+                            <>
+                                <li className="menu-title">{user.role === 'hr-manager' ? 'HR Manager' : 'Employee'}</li>
+                                {renderMenuItems(roleMenu)}
+                            </>
+                        )}
                     </ul>
                 </div>
-                <Link to={'/'} className="cursor-pointer">
+                <Link to={'/'} className="cursor-pointer text-xl font-semibold tracking-tight">
                     <Logo />
                 </Link>
             </div>
             <div className="navbar-center hidden lg:flex">
-                <ul className="menu menu-horizontal px-1">
-                    <li>
-                        <details>
-                            <summary>Public Links</summary>
-                            <ul className="p-2 bg-base-100 w-52 z-1">
-                                <li><Link to="/">Home</Link></li>
-                                <li><Link to="/join/employee">Join as Employee</Link></li>
-                                <li><Link to="/join/hr-manager">Join as HR Manager</Link></li>
-                            </ul>
-                        </details>
-                    </li>
-                    <li>
-                        <details>
-                            <summary>Join as Employee</summary>
-                            <ul className="p-2 bg-base-100 w-52 z-1">
-                                <li><button>My Assets</button></li>
-                                <li><button>My Team</button></li>
-                                <li><button>Request Asset</button></li>
-                                <li><button>Profile</button></li>
-                                <li><button>Logout</button></li>
-                            </ul>
-                        </details>
-                    </li>
-                    <li>
-                        <details>
-                            <summary>Join as HR Manager</summary>
-                            <ul className="p-2 bg-base-100 w-52 z-1">
-                                <li><button>Asset List</button></li>
-                                <li><button>Add Asset</button></li>
-                                <li><button>All Requests</button></li>
-                                <li><button>Employee List</button></li>
-                                <li><button>Profile</button></li>
-                                <li><button>Logout</button></li>
-                            </ul>
-                        </details>
-                    </li>
+                <ul className="menu menu-horizontal px-1 gap-2">
+                    {publicLinks.map((item) => (
+                        <li key={item.label}><Link to={item.to}>{item.label}</Link></li>
+                    ))}
                 </ul>
+            </div>
+            <div className="navbar-end gap-3">
+                {user && (
+                    <div className="dropdown dropdown-end">
+                        <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+                            <div className="w-10 rounded-full">
+                                <img alt={user.name} src={user.avatar} />
+                            </div>
+                        </div>
+                        <ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-56 p-2 shadow">
+                            <li className="menu-title">{user.name}</li>
+                            {renderMenuItems(roleMenu)}
+                        </ul>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,11 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router';
+import Logo from '../../../Components/Logo/Logo';
 
 const Footer = () => {
     const year = new Date().getFullYear();
     return (
         <div>
             <footer className="footer sm:footer-horizontal bg-base-200 text-base-content p-10">
+
+                <aside>
+                    <Logo></Logo>
+                    <p>
+                       AssetVerse Ltd.
+                        <br />
+                        Providing reliable tech since 1992
+                    </p>
+                </aside>
                 <nav>
                     <h6 className="footer-title">Quick Navigation</h6>
                     <Link className="link link-hover" to="/">Home</Link>
@@ -39,7 +49,7 @@ const Footer = () => {
                 </nav>
             </footer>
             <footer className="footer bg-base-200 text-base-content border-base-300 border-t px-10 py-4">
-                <aside className="grid-flow-col items-center">
+                <aside className="grid-flow-col items-center mx-auto">
                     <p>© {year} AssetVerse. All rights reserved.</p>
                 </aside>
             </footer>
