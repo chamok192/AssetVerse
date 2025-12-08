@@ -1,6 +1,8 @@
 import { createBrowserRouter } from "react-router";
 import RootLayout from "../RootLayout/RootLayout";
 import Home from "../Pages/Home/Home";
+import Employee from "../Pages/Join/Employee";
+import HRManager from "../Pages/Join/HRManager";
 
 export const router = createBrowserRouter([
     {
@@ -10,6 +12,14 @@ export const router = createBrowserRouter([
             {
                 index: true,
                 Component:Home
+            },
+            {
+                path: "join/employee",
+                Component: Employee
+            },
+            {
+                path: "join/hr-manager",
+                Component: HRManager
             }
         ]
     },
