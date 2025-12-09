@@ -5,6 +5,7 @@ import About from '../Shared/About/About';
 import Features from '../Shared/Features/Features';
 import Packages from '../Shared/Packages/Packages';
 import Testimonials from '../Shared/Testimonials/Testimonials';
+import HowItWorks from '../Shared/HowItWorks/HowItWorks';
 
 const Home = () => {
     return (
@@ -15,6 +16,7 @@ const Home = () => {
             <About/>
             <Packages/>
             <Testimonials/>
+            <HowItWorks/>
         </div>
     );
 };
