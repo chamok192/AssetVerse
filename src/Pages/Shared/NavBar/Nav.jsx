@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Logo from '../../../Components/Logo/Logo';
 import { Link, NavLink } from 'react-router';
 
 const publicLinks = [
     { label: 'Home', to: '/' },
+    { label: 'Pricing', to: '/#pricing', isHash: true },
     { label: 'Join as Employee', to: '/join/employee' },
     { label: 'Join as HR Manager', to: '/join/hr-manager' }
 ];
@@ -27,19 +28,55 @@ const hrManagerMenu = [
 
 const Nav = () => {
     const user = null;
+    const [activePricing, setActivePricing] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const pricingSection = document.querySelector('#pricing');
+            if (pricingSection) {
+                const rect = pricingSection.getBoundingClientRect();
+                setActivePricing(rect.top < window.innerHeight && rect.bottom > 0);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const roleMenu = user?.role === 'hr-manager' ? hrManagerMenu : employeeMenu;
 
     const handleLogout = () => {
         return null;
     };
 
-    const roleMenu = user?.role === 'hr-manager' ? hrManagerMenu : employeeMenu;
-
     const linkClass = ({ isActive }) => isActive ? 'active text-base-content font-semibold' : 'text-base-content/70';
+
+    const handleScrollToSection = (hash) => {
+        const element = document.querySelector(hash);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
+    const getHashLinkClass = (isHashActive) => isHashActive ? 'active text-base-content font-semibold' : 'text-base-content/70 hover:text-base-content';
 
     const renderMenuItems = (items) => items.map((item) => (
         <li key={item.label}>
             {item.to ? (
-                <NavLink to={item.to} className={linkClass}>{item.label}</NavLink>
+                item.isHash ? (
+                    <a 
+                        href={item.to} 
+                        onClick={(e) => {
+                            e.preventDefault();
+                            handleScrollToSection(item.to.substring(1));
+                        }}
+                        className="text-base-content/70 hover:text-base-content"
+                    >
+                        {item.label}
+                    </a>
+                ) : (
+                    <NavLink to={item.to} className={linkClass}>{item.label}</NavLink>
+                )
             ) : (
                 <button type="button" onClick={handleLogout}>{item.label}</button>
             )}
@@ -59,7 +96,22 @@ const Nav = () => {
                         tabIndex={0}
                         className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-56 p-2 shadow">
                         {publicLinks.map((item) => (
-                            <li key={item.label}><NavLink to={item.to} className={linkClass}>{item.label}</NavLink></li>
+                            <li key={item.label}>
+                                {item.isHash ? (
+                                    <a 
+                                        href={item.to} 
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleScrollToSection(item.to.substring(1));
+                                        }}
+                                        className={getHashLinkClass(activePricing)}
+                                    >
+                                        {item.label}
+                                    </a>
+                                ) : (
+                                    <NavLink to={item.to} className={linkClass}>{item.label}</NavLink>
+                                )}
+                            </li>
                         ))}
                         {user && (
                             <>
@@ -76,7 +128,22 @@ const Nav = () => {
             <div className="navbar-center hidden lg:flex">
                 <ul className="menu menu-horizontal px-1 gap-2">
                     {publicLinks.map((item) => (
-                        <li key={item.label}><NavLink to={item.to} className={linkClass}>{item.label}</NavLink></li>
+                        <li key={item.label}>
+                            {item.isHash ? (
+                                <a 
+                                    href={item.to} 
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleScrollToSection(item.to.substring(1));
+                                    }}
+                                    className={getHashLinkClass(activePricing)}
+                                >
+                                    {item.label}
+                                </a>
+                            ) : (
+                                <NavLink to={item.to} className={linkClass}>{item.label}</NavLink>
+                            )}
+                        </li>
                     ))}
                 </ul>
             </div>
