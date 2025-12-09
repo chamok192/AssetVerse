@@ -7,6 +7,7 @@ import Packages from '../Shared/Packages/Packages';
 import Testimonials from '../Shared/Testimonials/Testimonials';
 import HowItWorks from '../Shared/HowItWorks/HowItWorks';
 import FAQ from '../Shared/FAQ/FAQ';
+import ContactCTA from '../Shared/ContactCTA/ContactCTA';
 
 const Home = () => {
     return (
@@ -19,6 +20,7 @@ const Home = () => {
             <Testimonials/>
             <HowItWorks/>
             <FAQ/>
+            <ContactCTA/>
         </div>
     );
 };
