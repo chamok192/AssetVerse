@@ -49,7 +49,13 @@ const Nav = () => {
         return null;
     };
 
-    const linkClass = ({ isActive }) => isActive ? 'active text-base-content font-semibold' : 'text-base-content/70';
+    const linkClass = ({ isActive }) => {
+        // Don't show Home as active if pricing section is in view
+        if (isActive && activePricing) {
+            return 'text-base-content/70';
+        }
+        return isActive ? 'active text-base-content font-semibold' : 'text-base-content/70';
+    };
 
     const handleScrollToSection = (hash) => {
         const element = document.querySelector(hash);
