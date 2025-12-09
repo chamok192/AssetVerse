@@ -6,6 +6,7 @@ import Features from '../Shared/Features/Features';
 import Packages from '../Shared/Packages/Packages';
 import Testimonials from '../Shared/Testimonials/Testimonials';
 import HowItWorks from '../Shared/HowItWorks/HowItWorks';
+import FAQ from '../Shared/FAQ/FAQ';
 
 const Home = () => {
     return (
@@ -17,6 +18,7 @@ const Home = () => {
             <Packages/>
             <Testimonials/>
             <HowItWorks/>
+            <FAQ/>
         </div>
     );
 };
