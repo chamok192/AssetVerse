@@ -1,4 +1,3 @@
-import React from 'react';
 import { FaUserPlus, FaCog, FaRocket } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 

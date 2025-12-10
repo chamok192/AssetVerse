@@ -1,4 +1,3 @@
-import React from 'react';
 import { MdDashboard, MdCheckCircle, MdNotifications, MdAnalytics, MdSecurity, MdSync } from 'react-icons/md';
 
 const features = [

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import Nav from '../Pages/Shared/NavBar/Nav';
 import Footer from '../Pages/Shared/Footer/Footer';
@@ -11,7 +11,7 @@ const RootLayout = () => {
     }, [location.pathname]);
 
     return (
-        <div className='max-w-7xl mx-auto'>
+        <div className='max-w-7xl mx-auto overflow-x-hidden'>
             <Nav></Nav>
             <Outlet></Outlet>
             <Footer></Footer>

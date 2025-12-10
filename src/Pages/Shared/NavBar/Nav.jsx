@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Logo from '../../../Components/Logo/Logo';
 import { Link, NavLink } from 'react-router';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
-import app from '../../../FireBase/firebase.init';
-
-const auth = getAuth(app);
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../../../FireBase/firebase.init';
+import { logoutUser } from '../../../Auth/authService';
 
 const publicLinks = [
     { label: 'Home', to: '/' },
@@ -86,21 +85,14 @@ const Nav = () => {
 
 
     useEffect(() => {
-        if (user) {
-            console.log('NavBar detected user role:', user.role);
-        }
+        // User role tracking
     }, [user]);
 
     const roleMenu = user?.role === 'hr' ? hrManagerMenu : employeeMenu;
 
     const handleLogout = async () => {
-        try {
-            await signOut(auth);
-            localStorage.removeItem('userData');
-            setUser(null);
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
+        await logoutUser();
+        setUser(null);
     };
 
     const linkClass = ({ isActive }) => {

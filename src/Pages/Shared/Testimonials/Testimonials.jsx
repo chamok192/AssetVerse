@@ -1,4 +1,3 @@
-
 import { FaStar, FaQuoteLeft, FaMicrosoft, FaGoogle, FaAmazon, FaApple, FaSlack, FaDropbox, FaSpotify, FaStripe } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import { SiNetflix, SiAdobe, SiSalesforce, SiShopify } from 'react-icons/si';

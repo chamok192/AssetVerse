@@ -1,4 +1,3 @@
-import React from 'react';
 import { TbHexagonLetterAFilled } from "react-icons/tb";
 
 const Logo = () => {

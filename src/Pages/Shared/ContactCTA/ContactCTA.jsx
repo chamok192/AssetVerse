@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
@@ -20,7 +20,6 @@ const ContactCTA = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log('Form submitted:', formData);
         setFormData({ fullName: '', email: '', company: '', message: '' });
     };
     return (

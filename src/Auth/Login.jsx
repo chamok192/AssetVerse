@@ -1,50 +1,29 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import app from '../FireBase/firebase.init';
-
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+import { loginWithEmail, signInWithGoogle, getFieldError, validatePassword } from './authService';
 
 const Login = () => {
     const navigate = useNavigate();
     const [form, setForm] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [touched, setTouched] = useState({});
     const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
-        setTouched((prev) => ({ ...prev, [name]: true }));
         setError('');
-    };
-
-    const handleBlur = (e) => {
-        const { name } = e.target;
-        setTouched((prev) => ({ ...prev, [name]: true }));
-    };
-
-    const getFieldError = (fieldName) => {
-        if (!touched[fieldName]) return '';
-        if (!form[fieldName]) return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
-        if (fieldName === 'password' && form[fieldName].length < 6) return 'Password must be at least 6 characters';
-        if (fieldName === 'email' && !form[fieldName].includes('@')) return 'Valid email required';
-        return '';
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const allTouched = { email: true, password: true };
-        setTouched(allTouched);
         
         if (!form.email || !form.password) {
             setError('Please fill in all fields.');
             return;
         }
-        if (form.password.length < 6) {
+        if (!validatePassword(form.password)) {
             setError('Password must be at least 6 characters.');
             return;
         }
@@ -53,51 +32,18 @@ const Login = () => {
         setError('');
         setSuccess('');
 
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password);
-            const user = userCredential.user;
-
-            const existingData = JSON.parse(localStorage.getItem('userData')) || {};
-            
-            const userData = {
-                ...existingData,
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName || existingData.name,
-                name: existingData.name || user.displayName,
-                profileImage: user.photoURL || existingData.profileImage || existingData.avatar || '',
-                avatar: user.photoURL || existingData.profileImage || existingData.avatar || ''
-            };
-            
-            localStorage.setItem('userData', JSON.stringify(userData));
-            
-            setTimeout(() => {
-                window.dispatchEvent(new Event('storage'));
-            }, 100);
-
+        const result = await loginWithEmail(form.email, form.password);
+        
+        if (result.success) {
             setSuccess('Login successful! Redirecting...');
-            
             setTimeout(() => {
                 navigate('/');
             }, 1500);
-
-        } catch (error) {
-            console.error('Login error:', error);
-            
-            if (error.code === 'auth/user-not-found') {
-                setError('No account found with this email. Please register first.');
-            } else if (error.code === 'auth/wrong-password') {
-                setError('Incorrect password. Please try again.');
-            } else if (error.code === 'auth/invalid-email') {
-                setError('Invalid email address format.');
-            } else if (error.code === 'auth/invalid-credential') {
-                setError('Invalid email or password. Please check your credentials.');
-            } else {
-                setError('Login failed. Please try again.');
-            }
-        } finally {
-            setLoading(false);
+        } else {
+            setError(result.error);
         }
+        
+        setLoading(false);
     };
 
     const handleGoogleLogin = async () => {
@@ -105,47 +51,18 @@ const Login = () => {
         setError('');
         setSuccess('');
 
-        try {
-            const result = await signInWithPopup(auth, googleProvider);
-            const user = result.user;
-
-            const existingData = JSON.parse(localStorage.getItem('userData')) || {};
-            
-            const userData = {
-                ...existingData,
-                uid: user.uid,
-                email: user.email,
-                name: user.displayName || existingData.name || 'User',
-                displayName: user.displayName,
-                profileImage: user.photoURL || existingData.profileImage || '',
-                avatar: user.photoURL || existingData.avatar || '',
-                role: existingData.role || 'employee'
-            };
-            localStorage.setItem('userData', JSON.stringify(userData));
-            
-            setTimeout(() => {
-                window.dispatchEvent(new Event('storage'));
-            }, 100);
-
+        const result = await signInWithGoogle('employee');
+        
+        if (result.success) {
             setSuccess('Google login successful! Redirecting...');
-            
             setTimeout(() => {
                 navigate('/');
             }, 1500);
-
-        } catch (error) {
-            console.error('Google login error:', error);
-            
-            if (error.code === 'auth/popup-closed-by-user') {
-                setError('Login cancelled. Please try again.');
-            } else if (error.code === 'auth/popup-blocked') {
-                setError('Popup blocked. Please allow popups for this site.');
-            } else {
-                setError('Google login failed. Please try again.');
-            }
-        } finally {
-            setLoading(false);
+        } else {
+            setError(result.error);
         }
+        
+        setLoading(false);
     };
 
     return (
@@ -162,7 +79,6 @@ const Login = () => {
                             name="email" 
                             value={form.email} 
                             onChange={handleChange}
-                            onBlur={handleBlur}
                             type="email" 
                             placeholder="your@email.com" 
                             className={`input input-bordered w-full ${getFieldError('email') ? 'input-error' : ''}`}
@@ -176,7 +92,6 @@ const Login = () => {
                             name="password" 
                             value={form.password} 
                             onChange={handleChange}
-                            onBlur={handleBlur}
                             type="password" 
                             placeholder="Minimum 6 characters" 
                             className={`input input-bordered w-full ${getFieldError('password') ? 'input-error' : ''}`}

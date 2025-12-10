@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { HiShieldCheck } from 'react-icons/hi';
 import { MdSpeed, MdInsights } from 'react-icons/md';
