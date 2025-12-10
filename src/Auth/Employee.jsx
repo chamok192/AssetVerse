@@ -39,13 +39,6 @@ const Employee = () => {
         setTouched((prev) => ({ ...prev, [name]: true }));
     };
 
-    const handleProfileImageChange = (e) => {
-        const url = e.target.value;
-        setForm((prev) => ({ ...prev, profileImage: url }));
-        setProfilePreview(url);
-        setTouched((prev) => ({ ...prev, profileImage: true }));
-    };
-
     const handleProfileFileChange = (e) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -130,35 +123,30 @@ const Employee = () => {
                         <h1 className="text-3xl font-bold">Create your employee account</h1>
                         <p className="text-sm text-base-content/70">Use your personal email. Company affiliation will be handled after registration.</p>
                     </div>
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Full Name</span></div>
+                            <div className="label"><span className="label-text font-semibold text-base-content">Full Name</span></div>
                             <input name="name" value={form.name} onChange={handleChange} onBlur={handleBlur} type="text" placeholder="Your full name" className={`input input-bordered w-full ${handleFieldError('name') ? 'input-error' : ''}`} required />
                             {handleFieldError('name') && <p className="text-error text-xs mt-1">{handleFieldError('name')}</p>}
                         </label>
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Personal Email</span></div>
+                            <div className="label"><span className="label-text font-semibold text-base-content">Personal Email</span></div>
                             <input name="email" value={form.email} onChange={handleChange} onBlur={handleBlur} type="email" placeholder="personal@email.com" className={`input input-bordered w-full ${handleFieldError('email') ? 'input-error' : ''}`} required />
                             {handleFieldError('email') && <p className="text-error text-xs mt-1">{handleFieldError('email')}</p>}
                         </label>
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Password</span></div>
+                            <div className="label"><span className="label-text font-semibold text-base-content">Password</span></div>
                             <input name="password" value={form.password} onChange={handleChange} onBlur={handleBlur} type="password" placeholder="Minimum 6 characters" className={`input input-bordered w-full ${handleFieldError('password') ? 'input-error' : ''}`} minLength={6} required />
                             {handleFieldError('password') && <p className="text-error text-xs mt-1">{handleFieldError('password')}</p>}
                         </label>
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Date of Birth</span></div>
+                            <div className="label"><span className="label-text font-semibold text-base-content">Date of Birth</span></div>
                             <input name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} onBlur={handleBlur} type="date" className={`input input-bordered w-full ${handleFieldError('dateOfBirth') ? 'input-error' : ''}`} required />
                             {handleFieldError('dateOfBirth') && <p className="text-error text-xs mt-1">{handleFieldError('dateOfBirth')}</p>}
                         </label>
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Profile Image URL (optional)</span></div>
-                            <input name="profileImage" value={form.profileImage} onChange={handleProfileImageChange} onBlur={handleBlur} type="url" placeholder="https://example.com/profile.jpg" className="input input-bordered w-full" />
-                            {!handleFieldError('profileImage') && <div className="label"><span className="label-text-alt">If empty, we'll use your Google photo or initials.</span></div>}
-                        </label>
-                        <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Or upload profile image</span></div>
-                            <input name="profileImageFile" onChange={handleProfileFileChange} type="file" accept="image/*" className="file-input file-input-bordered w-full" />
+                            <div className="label"><span className="label-text font-semibold text-base-content">Upload profile image</span></div>
+                            <input name="profileImageFile" onChange={handleProfileFileChange} type="file" accept="image/*" className="file-input file-input-bordered file-input-primary w-full" />
                             <div className="label"><span className="label-text-alt">We will upload to ImgBB and store the URL.</span></div>
                         </label>
                         {profilePreview && (
@@ -167,7 +155,7 @@ const Employee = () => {
                             </div>
                         )}
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Role</span></div>
+                            <div className="label"><span className="label-text font-semibold text-base-content">Role</span></div>
                             <input name="role" value={form.role} disabled className="input input-bordered w-full bg-base-200" />
                         </label>
                         {error && <p className="text-error text-sm font-semibold">{error}</p>}

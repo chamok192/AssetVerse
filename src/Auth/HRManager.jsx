@@ -46,20 +46,6 @@ const HRManager = () => {
         setTouched((prev) => ({ ...prev, [name]: true }));
     };
 
-    const handleLogoChange = (e) => {
-        const url = e.target.value;
-        setForm((prev) => ({ ...prev, companyLogo: url }));
-        setLogoPreview(url);
-        setTouched((prev) => ({ ...prev, companyLogo: true }));
-    };
-
-    const handleProfileImageChange = (e) => {
-        const url = e.target.value;
-        setForm((prev) => ({ ...prev, profileImage: url }));
-        setProfileImagePreview(url);
-        setTouched((prev) => ({ ...prev, profileImage: true }));
-    };
-
     const handleProfileFileChange = (e) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -101,11 +87,19 @@ const HRManager = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const allTouched = { name: true, email: true, password: true, dateOfBirth: true, companyName: true, companyLogo: true, profileImage: true };
+        const allTouched = { name: true, email: true, password: true, dateOfBirth: true, companyName: true };
         setTouched(allTouched);
 
-        if (!form.name || !form.profileImage || !form.companyName || !form.companyLogo || !form.email || !form.password || !form.dateOfBirth) {
+        if (!form.name || !form.email || !form.password || !form.dateOfBirth || !form.companyName) {
             setError('Please fill in all required fields.');
+            return;
+        }
+        if (!profileImageFile) {
+            setError('Please upload a profile image.');
+            return;
+        }
+        if (!companyLogoFile) {
+            setError('Please upload a company logo.');
             return;
         }
         if (form.password.length < 6) {
@@ -167,37 +161,31 @@ const HRManager = () => {
                         <h1 className="text-3xl font-bold">Register your company</h1>
                         <p className="text-sm text-base-content/70">Set up your company profile and admin credentials to manage assets and employees.</p>
                     </div>
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="divider my-2">Your Information</div>
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Full Name</span></div>
+                            <div className="label"><span className="label-text font-semibold text-base-content">Full Name</span></div>
                             <input name="name" value={form.name} onChange={handleChange} onBlur={handleBlur} type="text" placeholder="Your Full Name" className={`input input-bordered w-full ${handleFieldError('name') ? 'input-error' : ''}`} required />
                             {handleFieldError('name') && <p className="text-error text-xs mt-1">{handleFieldError('name')}</p>}
                         </label>
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Work Email</span></div>
+                            <div className="label"><span className="label-text font-semibold text-base-content">Work Email</span></div>
                             <input name="email" value={form.email} onChange={handleChange} onBlur={handleBlur} type="email" placeholder="admin@company.com" className={`input input-bordered w-full ${handleFieldError('email') ? 'input-error' : ''}`} required />
                             {handleFieldError('email') && <p className="text-error text-xs mt-1">{handleFieldError('email')}</p>}
                         </label>
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Password</span></div>
+                            <div className="label"><span className="label-text font-semibold text-base-content">Password</span></div>
                             <input name="password" value={form.password} onChange={handleChange} onBlur={handleBlur} type="password" placeholder="Minimum 6 characters" className={`input input-bordered w-full ${handleFieldError('password') ? 'input-error' : ''}`} minLength={6} required />
                             {handleFieldError('password') && <p className="text-error text-xs mt-1">{handleFieldError('password')}</p>}
                         </label>
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Date of Birth</span></div>
+                            <div className="label"><span className="label-text font-semibold text-base-content">Date of Birth</span></div>
                             <input name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} onBlur={handleBlur} type="date" className={`input input-bordered w-full ${handleFieldError('dateOfBirth') ? 'input-error' : ''}`} required />
                             {handleFieldError('dateOfBirth') && <p className="text-error text-xs mt-1">{handleFieldError('dateOfBirth')}</p>}
                         </label>
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Profile Image URL</span></div>
-                            <input name="profileImage" value={form.profileImage} onChange={handleProfileImageChange} onBlur={handleBlur} type="url" placeholder="https://example.com/profile.jpg" className={`input input-bordered w-full ${handleFieldError('profileImage') ? 'input-error' : ''}`} required />
-                            {handleFieldError('profileImage') && <p className="text-error text-xs mt-1">{handleFieldError('profileImage')}</p>}
-                            {!handleFieldError('profileImage') && <div className="label"><span className="label-text-alt">Use ImgBB </span></div>}
-                        </label>
-                        <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Or upload profile image</span></div>
-                            <input name="profileImageFile" onChange={handleProfileFileChange} type="file" accept="image/*" className="file-input file-input-bordered w-full" />
+                            <div className="label"><span className="label-text font-semibold text-base-content">Upload profile image</span></div>
+                            <input name="profileImageFile" onChange={handleProfileFileChange} type="file" accept="image/*" className="file-input file-input-bordered file-input-primary w-full" />
                             <div className="label"><span className="label-text-alt">We will upload to ImgBB and store the URL.</span></div>
                         </label>
                         {profileImagePreview && (
@@ -207,19 +195,13 @@ const HRManager = () => {
                         )}
                         <div className="divider my-2">Company Details</div>
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Company Name</span></div>
+                            <div className="label"><span className="label-text font-semibold text-base-content">Company Name</span></div>
                             <input name="companyName" value={form.companyName} onChange={handleChange} onBlur={handleBlur} type="text" placeholder="Your Company Ltd." className={`input input-bordered w-full ${handleFieldError('companyName') ? 'input-error' : ''}`} required />
                             {handleFieldError('companyName') && <p className="text-error text-xs mt-1">{handleFieldError('companyName')}</p>}
                         </label>
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Company Logo URL</span></div>
-                            <input name="companyLogo" value={form.companyLogo} onChange={handleLogoChange} onBlur={handleBlur} type="url" placeholder="https://example.com/logo.png" className={`input input-bordered w-full ${handleFieldError('companyLogo') ? 'input-error' : ''}`} required />
-                            {handleFieldError('companyLogo') && <p className="text-error text-xs mt-1">{handleFieldError('companyLogo')}</p>}
-                            {!handleFieldError('companyLogo') && <div className="label"><span className="label-text-alt">Use ImgBB </span></div>}
-                        </label>
-                        <label className="form-control w-full">
-                            <div className="label"><span className="label-text">Or upload company logo</span></div>
-                            <input name="companyLogoFile" onChange={handleLogoFileChange} type="file" accept="image/*" className="file-input file-input-bordered w-full" />
+                            <div className="label"><span className="label-text font-semibold text-base-content">Upload company logo</span></div>
+                            <input name="companyLogoFile" onChange={handleLogoFileChange} type="file" accept="image/*" className="file-input file-input-bordered file-input-primary w-full" />
                             <div className="label"><span className="label-text-alt">We will upload to ImgBB and store the URL.</span></div>
                         </label>
                         {logoPreview && (
