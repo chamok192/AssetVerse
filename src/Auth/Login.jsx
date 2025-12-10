@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import app from '../../FireBase/firebase.config';
+import app from '../FireBase/firebase.init';
 
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();

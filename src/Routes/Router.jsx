@@ -1,10 +1,11 @@
 import { createBrowserRouter } from "react-router";
 import RootLayout from "../RootLayout/RootLayout";
 import Home from "../Pages/Home/Home";
-import Employee from "../Pages/Join/Employee";
-import HRManager from "../Pages/Join/HRManager";
+import AuthLayout from "../Auth/AuthLayout";
+import Employee from "../Auth/Employee";
+import HRManager from "../Auth/HRManager";
+import Login from "../Auth/Login";
 import ErrorPage from "../Pages/Error/ErrorPage";
-import Login from "../Pages/Login/Login";
 
 export const router = createBrowserRouter([
     {
@@ -16,16 +17,21 @@ export const router = createBrowserRouter([
                 Component:Home
             },
             {
-                path: "login",
-                Component: Login
-            },
-            {
-                path: "join/employee",
-                Component: Employee
-            },
-            {
-                path: "join/hr-manager",
-                Component: HRManager
+                Component: AuthLayout,
+                children: [
+                    {
+                        path: "login",
+                        Component: Login
+                    },
+                    {
+                        path: "join/employee",
+                        Component: Employee
+                    },
+                    {
+                        path: "join/hr-manager",
+                        Component: HRManager
+                    }
+                ]
             },
             {
                 path: "*",

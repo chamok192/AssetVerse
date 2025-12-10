@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Logo from '../../../Components/Logo/Logo';
 import { Link, NavLink } from 'react-router';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
-import app from '../../../FireBase/firebase.config';
+import app from '../../../FireBase/firebase.init';
 
 const auth = getAuth(app);
 
