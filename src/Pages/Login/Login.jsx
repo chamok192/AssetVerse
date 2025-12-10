@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import app from '../../FireBase/firebase.config';
+
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 const Login = () => {
+    const navigate = useNavigate();
     const [form, setForm] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [touched, setTouched] = useState({});
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -27,10 +35,11 @@ const Login = () => {
         return '';
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const allTouched = { email: true, password: true };
         setTouched(allTouched);
+        
         if (!form.email || !form.password) {
             setError('Please fill in all fields.');
             return;
@@ -39,10 +48,95 @@ const Login = () => {
             setError('Password must be at least 6 characters.');
             return;
         }
+
+        setLoading(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password);
+            const user = userCredential.user;
+
+            const userData = JSON.parse(localStorage.getItem('userData')) || {};
+            userData.uid = user.uid;
+            userData.email = user.email;
+            userData.displayName = user.displayName;
+            userData.profileImage = user.photoURL || userData.profileImage || userData.avatar || '';
+            userData.avatar = user.photoURL || userData.profileImage || userData.avatar || '';
+            localStorage.setItem('userData', JSON.stringify(userData));
+            
+            setTimeout(() => {
+                window.dispatchEvent(new Event('storage'));
+            }, 100);
+
+            setSuccess('Login successful! Redirecting...');
+            
+            setTimeout(() => {
+                navigate('/');
+            }, 1500);
+
+        } catch (error) {
+            console.error('Login error:', error);
+            
+            if (error.code === 'auth/user-not-found') {
+                setError('No account found with this email. Please register first.');
+            } else if (error.code === 'auth/wrong-password') {
+                setError('Incorrect password. Please try again.');
+            } else if (error.code === 'auth/invalid-email') {
+                setError('Invalid email address format.');
+            } else if (error.code === 'auth/invalid-credential') {
+                setError('Invalid email or password. Please check your credentials.');
+            } else {
+                setError('Login failed. Please try again.');
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleGoogleLogin = () => {
-        return null;
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+
+            const userData = {
+                uid: user.uid,
+                email: user.email,
+                name: user.displayName || 'User',
+                displayName: user.displayName,
+                profileImage: user.photoURL || '',
+                avatar: user.photoURL || '',
+                role: 'employee'
+            };
+            localStorage.setItem('userData', JSON.stringify(userData));
+            
+            setTimeout(() => {
+                window.dispatchEvent(new Event('storage'));
+            }, 100);
+
+            setSuccess('Google login successful! Redirecting...');
+            
+            setTimeout(() => {
+                navigate('/');
+            }, 1500);
+
+        } catch (error) {
+            console.error('Google login error:', error);
+            
+            if (error.code === 'auth/popup-closed-by-user') {
+                setError('Login cancelled. Please try again.');
+            } else if (error.code === 'auth/popup-blocked') {
+                setError('Popup blocked. Please allow popups for this site.');
+            } else {
+                setError('Google login failed. Please try again.');
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -82,17 +176,21 @@ const Login = () => {
                         />
                         {getFieldError('password') && <p className="text-error text-xs mt-1">{getFieldError('password')}</p>}
                     </label>
-                    {error && <p className="text-error text-sm">{error}</p>}
-                    <button type="submit" className="btn mt-5 btn-neutral w-full">Login</button>
+                    {error && <p className="text-error text-sm font-semibold">{error}</p>}
+                    {success && <p className="text-success text-sm font-semibold">{success}</p>}
+                    <button type="submit" className="btn mt-5 btn-neutral w-full" disabled={loading}>
+                        {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Login'}
+                    </button>
                 </form>
                 <div className="divider">OR</div>
                 <button 
                     type="button" 
                     onClick={handleGoogleLogin} 
                     className="btn btn-outline w-full gap-2"
+                    disabled={loading}
                 >
                     <FcGoogle className="text-xl" />
-                    Continue with Google
+                    {loading ? 'Signing in...' : 'Continue with Google'}
                 </button>
                 <div className="divider">New to AssetVerse?</div>
                 <div className="text-center space-y-3">

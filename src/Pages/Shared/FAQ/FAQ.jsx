@@ -57,7 +57,7 @@ const FAQ = () => {
 
                 <div className="space-y-4">
                     {faqs.map((faq, index) => (
-                        <div 
+                        <div
                             key={index}
                             className="border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300"
                         >
@@ -74,7 +74,7 @@ const FAQ = () => {
                                     <FaChevronDown className="text-slate-600 shrink-0" />
                                 )}
                             </button>
-                            
+
                             {openIndex === index && (
                                 <div className="px-6 pb-6 bg-slate-50">
                                     <p className="text-slate-600 leading-relaxed">

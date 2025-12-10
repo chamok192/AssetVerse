@@ -42,8 +42,8 @@ const HowItWorks = () => {
                 </div>
 
                 <div className="grid gap-12 md:grid-cols-3 relative">
-                    <div className="hidden md:block absolute top-20 left-0 right-0 h-1 bg-linear-to-r from-blue-500 via-purple-500 to-emerald-500 opacity-20" 
-                         style={{ width: '80%', margin: '0 10%' }}>
+                    <div className="hidden md:block absolute top-20 left-0 right-0 h-1 bg-linear-to-r from-blue-500 via-purple-500 to-emerald-500 opacity-20"
+                        style={{ width: '80%', margin: '0 10%' }}>
                     </div>
 
                     {steps.map((step, idx) => {

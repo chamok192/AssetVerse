@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Logo from '../../../Components/Logo/Logo';
 import { Link, NavLink } from 'react-router';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import app from '../../../FireBase/firebase.config';
+
+const auth = getAuth(app);
 
 const publicLinks = [
     { label: 'Home', to: '/' },
@@ -27,8 +31,45 @@ const hrManagerMenu = [
 ];
 
 const Nav = () => {
-    const user = null;
+    const [user, setUser] = useState(null);
     const [activePricing, setActivePricing] = useState(false);
+
+    useEffect(() => {
+        const updateUserState = (currentUser) => {
+            if (currentUser) {
+                currentUser.reload().then(() => {
+                    const userData = JSON.parse(localStorage.getItem('userData')) || {};
+                    const avatarUrl = currentUser.photoURL || userData.profileImage || userData.avatar || 'https://via.placeholder.com/150';
+                    
+                    setUser({
+                        uid: currentUser.uid,
+                        name: currentUser.displayName || userData.name || 'User',
+                        email: currentUser.email,
+                        avatar: avatarUrl,
+                        role: userData.role || 'employee'
+                    });
+                });
+            } else {
+                setUser(null);
+            }
+        };
+
+        const unsubscribe = onAuthStateChanged(auth, updateUserState);
+
+        const handleStorageChange = () => {
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+                updateUserState(currentUser);
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            unsubscribe();
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -45,12 +86,17 @@ const Nav = () => {
 
     const roleMenu = user?.role === 'hr-manager' ? hrManagerMenu : employeeMenu;
 
-    const handleLogout = () => {
-        return null;
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            localStorage.removeItem('userData');
+            setUser(null);
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
     };
 
     const linkClass = ({ isActive }) => {
-        // Don't show Home as active if pricing section is in view
         if (isActive && activePricing) {
             return 'text-base-content/70';
         }
@@ -70,8 +116,8 @@ const Nav = () => {
         <li key={item.label}>
             {item.to ? (
                 item.isHash ? (
-                    <a 
-                        href={item.to} 
+                    <a
+                        href={item.to}
                         onClick={(e) => {
                             e.preventDefault();
                             handleScrollToSection(item.to.substring(1));
@@ -104,8 +150,8 @@ const Nav = () => {
                         {publicLinks.map((item) => (
                             <li key={item.label}>
                                 {item.isHash ? (
-                                    <a 
-                                        href={item.to} 
+                                    <a
+                                        href={item.to}
                                         onClick={(e) => {
                                             e.preventDefault();
                                             handleScrollToSection(item.to.substring(1));
@@ -136,8 +182,8 @@ const Nav = () => {
                     {publicLinks.map((item) => (
                         <li key={item.label}>
                             {item.isHash ? (
-                                <a 
-                                    href={item.to} 
+                                <a
+                                    href={item.to}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         handleScrollToSection(item.to.substring(1));

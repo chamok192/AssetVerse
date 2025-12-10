@@ -57,7 +57,6 @@ const Testimonials = () => {
     return (
         <section className="rounded-xl py-20 px-6 lg:px-16 bg-slate-900 text-white mb-16">
             <div className="max-w-7xl mx-auto">
-                {/* Stats Section */}
                 <div className="text-center mb-16">
                     <h2 className="text-4xl font-semibold mb-4">
                         Trusted by Industry Leaders
@@ -65,7 +64,7 @@ const Testimonials = () => {
                     <p className="text-lg text-slate-300 max-w-3xl mx-auto mb-12">
                         Join hundreds of companies already streamlining their asset management with AssetVerse
                     </p>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
                         {stats.map((stat) => {
                             const Icon = stat.icon;
@@ -82,7 +81,6 @@ const Testimonials = () => {
                     </div>
                 </div>
 
-                {/* Testimonials Section */}
                 <div className="mb-12 text-center">
                     <h3 className="text-3xl font-semibold mb-4">
                         What Our Clients Say
@@ -94,28 +92,25 @@ const Testimonials = () => {
 
                 <div className="grid gap-8 md:grid-cols-3">
                     {testimonials.map((testimonial, idx) => (
-                        <div 
+                        <div
                             key={idx}
                             className="bg-slate-800 rounded-2xl p-8 hover:bg-slate-700 transition-colors duration-300 relative"
                         >
                             <FaQuoteLeft className="text-4xl text-slate-600 mb-4" />
-                            
-                            {/* Rating */}
+
                             <div className="flex gap-1 mb-4">
                                 {[...Array(testimonial.rating)].map((_, i) => (
                                     <FaStar key={i} className="text-yellow-400" />
                                 ))}
                             </div>
 
-                            {/* Testimonial Text */}
                             <p className="text-slate-200 leading-relaxed mb-6">
                                 "{testimonial.text}"
                             </p>
 
-                            {/* Author Info */}
                             <div className="flex items-center gap-4">
-                                <img 
-                                    src={testimonial.image} 
+                                <img
+                                    src={testimonial.image}
                                     alt={testimonial.name}
                                     className="w-12 h-12 rounded-full"
                                 />
@@ -129,7 +124,6 @@ const Testimonials = () => {
                     ))}
                 </div>
 
-                {/* Company Logos Slider */}
                 <div className="mt-16 text-center overflow-hidden">
                     <p className="text-slate-400 mb-8">Trusted by leading companies worldwide</p>
                     <div className="relative">
@@ -148,7 +142,6 @@ const Testimonials = () => {
                                 <SiShopify className="text-5xl text-slate-500 hover:text-green-600 transition-colors cursor-pointer shrink-0" />
                                 <FaStripe className="text-5xl text-slate-500 hover:text-purple-600 transition-colors cursor-pointer shrink-0" />
                             </div>
-                            {/* Duplicate for seamless loop */}
                             <div className="flex gap-16 items-center px-8">
                                 <FaMicrosoft className="text-5xl text-slate-500 hover:text-blue-500 transition-colors cursor-pointer shrink-0" />
                                 <FaGoogle className="text-5xl text-slate-500 hover:text-red-500 transition-colors cursor-pointer shrink-0" />

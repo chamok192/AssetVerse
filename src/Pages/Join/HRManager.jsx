@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
+import { getAuth, createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import app from '../../FireBase/firebase.config';
+import { useNavigate } from 'react-router-dom';
+import { FcGoogle } from 'react-icons/fc';
+
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 const initialForm = {
     name: '',
+    profileImage: '',
     companyName: '',
     companyLogo: '',
     email: '',
@@ -14,11 +22,14 @@ const initialForm = {
 };
 
 const HRManager = () => {
+    const navigate = useNavigate();
     const [form, setForm] = useState(initialForm);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [logoPreview, setLogoPreview] = useState('');
+    const [profileImagePreview, setProfileImagePreview] = useState('');
     const [touched, setTouched] = useState({});
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -42,6 +53,65 @@ const HRManager = () => {
         setSuccess('');
     };
 
+    const handleProfileImageChange = (e) => {
+        const url = e.target.value;
+        setForm((prev) => ({ ...prev, profileImage: url }));
+        setProfileImagePreview(url);
+        setTouched((prev) => ({ ...prev, profileImage: true }));
+        setError('');
+        setSuccess('');
+    };
+
+    const handleGoogleRegister = async () => {
+        setLoading(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+
+            const userData = {
+                uid: user.uid,
+                name: user.displayName || 'User',
+                email: user.email,
+                profileImage: user.photoURL || '',
+                avatar: user.photoURL || '',
+                companyName: '',
+                companyLogo: '',
+                dateOfBirth: '',
+                role: 'hr',
+                packageLimit: 5,
+                currentEmployees: 0,
+                subscription: 'basic'
+            };
+            localStorage.setItem('userData', JSON.stringify(userData));
+            
+            setTimeout(() => {
+                window.dispatchEvent(new Event('storage'));
+            }, 100);
+
+            setSuccess('Google registration successful! Redirecting...');
+            
+            setTimeout(() => {
+                navigate('/');
+            }, 1500);
+
+        } catch (error) {
+            console.error('Google registration error:', error);
+            
+            if (error.code === 'auth/popup-closed-by-user') {
+                setError('Registration cancelled. Please try again.');
+            } else if (error.code === 'auth/popup-blocked') {
+                setError('Popup blocked. Please allow popups for this site.');
+            } else {
+                setError('Google registration failed. Please try again.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const getFieldError = (fieldName) => {
         if (!touched[fieldName]) return '';
         if (!form[fieldName]) return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1).replace(/([A-Z])/g, ' $1')} is required`;
@@ -50,11 +120,12 @@ const HRManager = () => {
         return '';
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const allTouched = { name: true, email: true, password: true, dateOfBirth: true, companyName: true, companyLogo: true };
+        const allTouched = { name: true, email: true, password: true, dateOfBirth: true, companyName: true, companyLogo: true, profileImage: true };
         setTouched(allTouched);
-        if (!form.name || !form.companyName || !form.companyLogo || !form.email || !form.password || !form.dateOfBirth) {
+
+        if (!form.name || !form.profileImage || !form.companyName || !form.companyLogo || !form.email || !form.password || !form.dateOfBirth) {
             setError('Please fill in all required fields.');
             return;
         }
@@ -62,7 +133,60 @@ const HRManager = () => {
             setError('Password must be at least 6 characters.');
             return;
         }
-        setSuccess('Registered successfully as HR Manager.');
+
+        setLoading(true);
+        setError('');
+        setSuccess('');
+
+        try {
+
+            const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+            const user = userCredential.user;
+
+
+            await updateProfile(user, {
+                displayName: form.name,
+                photoURL: form.profileImage
+            });
+
+
+            const userData = {
+                uid: user.uid,
+                name: form.name,
+                email: form.email,
+                profileImage: form.profileImage,
+                companyName: form.companyName,
+                companyLogo: form.companyLogo,
+                dateOfBirth: form.dateOfBirth,
+                role: form.role,
+                packageLimit: form.packageLimit,
+                currentEmployees: form.currentEmployees,
+                subscription: form.subscription
+            };
+            localStorage.setItem('userData', JSON.stringify(userData));
+            window.dispatchEvent(new Event('storage'));
+
+            setSuccess('Registration successful! Redirecting...');
+
+            setTimeout(() => {
+                navigate('/');
+            }, 2000);
+
+        } catch (error) {
+            console.error('Registration error:', error);
+
+            if (error.code === 'auth/email-already-in-use') {
+                setError('This email is already registered. Please use a different email or login.');
+            } else if (error.code === 'auth/invalid-email') {
+                setError('Invalid email address format.');
+            } else if (error.code === 'auth/weak-password') {
+                setError('Password is too weak. Please use a stronger password.');
+            } else {
+                setError('Registration failed. Please try again.');
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -96,6 +220,17 @@ const HRManager = () => {
                             <input name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} onBlur={handleBlur} type="date" className={`input input-bordered w-full ${getFieldError('dateOfBirth') ? 'input-error' : ''}`} required />
                             {getFieldError('dateOfBirth') && <p className="text-error text-xs mt-1">{getFieldError('dateOfBirth')}</p>}
                         </label>
+                        <label className="form-control w-full">
+                            <div className="label"><span className="label-text">Profile Image URL</span></div>
+                            <input name="profileImage" value={form.profileImage} onChange={handleProfileImageChange} onBlur={handleBlur} type="url" placeholder="https://example.com/profile.jpg" className={`input input-bordered w-full ${getFieldError('profileImage') ? 'input-error' : ''}`} required />
+                            {getFieldError('profileImage') && <p className="text-error text-xs mt-1">{getFieldError('profileImage')}</p>}
+                            {!getFieldError('profileImage') && <div className="label"><span className="label-text-alt">Use ImgBB </span></div>}
+                        </label>
+                        {profileImagePreview && (
+                            <div className="p-4 bg-base-200 rounded-lg flex items-center justify-center">
+                                <img src={profileImagePreview} alt="Profile" className="w-24 h-24 rounded-full object-cover" onError={() => setProfileImagePreview('')} />
+                            </div>
+                        )}
                         <div className="divider my-2">Company Details</div>
                         <label className="form-control w-full">
                             <div className="label"><span className="label-text">Company Name</span></div>
@@ -106,7 +241,7 @@ const HRManager = () => {
                             <div className="label"><span className="label-text">Company Logo URL</span></div>
                             <input name="companyLogo" value={form.companyLogo} onChange={handleLogoChange} onBlur={handleBlur} type="url" placeholder="https://example.com/logo.png" className={`input input-bordered w-full ${getFieldError('companyLogo') ? 'input-error' : ''}`} required />
                             {getFieldError('companyLogo') && <p className="text-error text-xs mt-1">{getFieldError('companyLogo')}</p>}
-                            {!getFieldError('companyLogo') && <div className="label"><span className="label-text-alt">Use ImgBB or Cloudinary for hosting</span></div>}
+                            {!getFieldError('companyLogo') && <div className="label"><span className="label-text-alt">Use ImgBB </span></div>}
                         </label>
                         {logoPreview && (
                             <div className="p-4 bg-base-200 rounded-lg flex items-center justify-center">
@@ -130,7 +265,22 @@ const HRManager = () => {
                         </div>
                         {error && <p className="text-error text-sm font-semibold">{error}</p>}
                         {success && <p className="text-success text-sm font-semibold">{success}</p>}
-                        <button type="submit" className="btn btn-neutral w-full">Register Company</button>
+                        <button type="submit" className="btn btn-neutral w-full" disabled={loading}>
+                            {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Register Company'}
+                        </button>
+                        <div className="divider my-2">OR</div>
+                        <button 
+                            type="button" 
+                            onClick={handleGoogleRegister} 
+                            className="btn btn-outline w-full gap-2"
+                            disabled={loading}
+                        >
+                            <FcGoogle className="text-xl" />
+                            {loading ? 'Signing up...' : 'Sign Up with Google'}
+                        </button>
+                        <p className="text-sm text-center text-base-content/70">
+                            Already have an account? <a href="/login" className="link link-primary">Login here</a>
+                        </p>
                     </form>
                 </div>
                 <div className="hidden lg:flex items-center justify-center">
@@ -140,7 +290,7 @@ const HRManager = () => {
                             <h2 className="text-3xl font-extrabold leading-tight">Manage your team's assets effortlessly.</h2>
                             <p className="text-sm text-white/80">As an HR Manager, you get a dedicated workspace to track company assets, manage employee requests, and control your subscription plan.</p>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
