@@ -40,7 +40,7 @@ const Nav = () => {
                 currentUser.reload().then(() => {
                     const userData = JSON.parse(localStorage.getItem('userData')) || {};
                     const avatarUrl = currentUser.photoURL || userData.profileImage || userData.avatar || 'https://via.placeholder.com/150';
-                    
+
                     setUser({
                         uid: currentUser.uid,
                         name: currentUser.displayName || userData.name || 'User',
@@ -84,7 +84,14 @@ const Nav = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const roleMenu = user?.role === 'hr-manager' ? hrManagerMenu : employeeMenu;
+
+    useEffect(() => {
+        if (user) {
+            console.log('NavBar detected user role:', user.role);
+        }
+    }, [user]);
+
+    const roleMenu = user?.role === 'hr' ? hrManagerMenu : employeeMenu;
 
     const handleLogout = async () => {
         try {
@@ -167,7 +174,7 @@ const Nav = () => {
                         ))}
                         {user && (
                             <>
-                                <li className="menu-title">{user.role === 'hr-manager' ? 'HR Manager' : 'Employee'}</li>
+                                <li className="menu-title">{user.role === 'hr' ? 'HR Manager' : 'Employee'}</li>
                                 {renderMenuItems(roleMenu)}
                             </>
                         )}

@@ -57,12 +57,18 @@ const Login = () => {
             const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password);
             const user = userCredential.user;
 
-            const userData = JSON.parse(localStorage.getItem('userData')) || {};
-            userData.uid = user.uid;
-            userData.email = user.email;
-            userData.displayName = user.displayName;
-            userData.profileImage = user.photoURL || userData.profileImage || userData.avatar || '';
-            userData.avatar = user.photoURL || userData.profileImage || userData.avatar || '';
+            const existingData = JSON.parse(localStorage.getItem('userData')) || {};
+            
+            const userData = {
+                ...existingData,
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName || existingData.name,
+                name: existingData.name || user.displayName,
+                profileImage: user.photoURL || existingData.profileImage || existingData.avatar || '',
+                avatar: user.photoURL || existingData.profileImage || existingData.avatar || ''
+            };
+            
             localStorage.setItem('userData', JSON.stringify(userData));
             
             setTimeout(() => {
@@ -103,14 +109,17 @@ const Login = () => {
             const result = await signInWithPopup(auth, googleProvider);
             const user = result.user;
 
+            const existingData = JSON.parse(localStorage.getItem('userData')) || {};
+            
             const userData = {
+                ...existingData,
                 uid: user.uid,
                 email: user.email,
-                name: user.displayName || 'User',
+                name: user.displayName || existingData.name || 'User',
                 displayName: user.displayName,
-                profileImage: user.photoURL || '',
-                avatar: user.photoURL || '',
-                role: 'employee'
+                profileImage: user.photoURL || existingData.profileImage || '',
+                avatar: user.photoURL || existingData.avatar || '',
+                role: existingData.role || 'employee'
             };
             localStorage.setItem('userData', JSON.stringify(userData));
             
