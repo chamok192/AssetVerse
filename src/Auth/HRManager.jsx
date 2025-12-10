@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { registerHRManager, signInWithGoogle, getFieldError, uploadImageToImgBB } from './authService';
+import { registerHRManager, getFieldError, uploadImageToImgBB } from './authService';
 import { useNavigate } from 'react-router-dom';
-import { FcGoogle } from 'react-icons/fc';
 
 const initialForm = {
     name: '',
@@ -66,31 +65,12 @@ const HRManager = () => {
         }
     };
 
-    const handleGoogleRegister = async () => {
-        setLoading(true);
-        setError('');
-        setSuccess('');
-
-        const result = await signInWithGoogle('hr');
-        
-        if (result.success) {
-            setSuccess('Google registration successful! Redirecting...');
-            setTimeout(() => {
-                navigate('/');
-            }, 1500);
-        } else {
-            setError(result.error);
-        }
-        
-        setLoading(false);
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         const allTouched = { name: true, email: true, password: true, dateOfBirth: true, companyName: true };
         setTouched(allTouched);
 
-        if (!form.name || !form.email || !form.password || !form.dateOfBirth || !form.companyName) {
+        if (!form.name || !form.email || !form.dateOfBirth || !form.companyName || !form.password) {
             setError('Please fill in all required fields.');
             return;
         }
@@ -228,16 +208,6 @@ const HRManager = () => {
                         {success && <p className="text-success text-sm font-semibold">{success}</p>}
                         <button type="submit" className="btn btn-neutral w-full" disabled={loading}>
                             {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Register Company'}
-                        </button>
-                        <div className="divider my-2">OR</div>
-                        <button 
-                            type="button" 
-                            onClick={handleGoogleRegister} 
-                            className="btn btn-outline w-full gap-2"
-                            disabled={loading}
-                        >
-                            <FcGoogle className="text-xl" />
-                            {loading ? 'Signing up...' : 'Sign Up with Google'}
                         </button>
                         <p className="text-sm text-center text-base-content/70">
                             Already have an account? <a href="/login" className="link link-primary">Login here</a>

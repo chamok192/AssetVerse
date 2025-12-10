@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FcGoogle } from 'react-icons/fc';
-import { loginWithEmail, signInWithGoogle, getFieldError, validatePassword } from './authService';
+import { loginWithEmail, getFieldError, validatePassword } from './authService';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -36,25 +35,6 @@ const Login = () => {
         
         if (result.success) {
             setSuccess('Login successful! Redirecting...');
-            setTimeout(() => {
-                navigate('/');
-            }, 1500);
-        } else {
-            setError(result.error);
-        }
-        
-        setLoading(false);
-    };
-
-    const handleGoogleLogin = async () => {
-        setLoading(true);
-        setError('');
-        setSuccess('');
-
-        const result = await signInWithGoogle('employee');
-        
-        if (result.success) {
-            setSuccess('Google login successful! Redirecting...');
             setTimeout(() => {
                 navigate('/');
             }, 1500);
@@ -106,16 +86,6 @@ const Login = () => {
                         {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Login'}
                     </button>
                 </form>
-                <div className="divider">OR</div>
-                <button 
-                    type="button" 
-                    onClick={handleGoogleLogin} 
-                    className="btn btn-outline w-full gap-2"
-                    disabled={loading}
-                >
-                    <FcGoogle className="text-xl" />
-                    {loading ? 'Signing in...' : 'Continue with Google'}
-                </button>
                 <div className="divider">New to AssetVerse?</div>
                 <div className="text-center space-y-3">
                     <div className="flex flex-col gap-2">

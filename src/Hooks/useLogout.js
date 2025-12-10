@@ -7,8 +7,8 @@ export const useLogout = () => {
             await signOut(auth);
             localStorage.removeItem('userData');
             window.dispatchEvent(new Event('storage'));
-        } catch {
-            // Handle logout error silently
+        } catch (error) {
+            console.error('Logout error:', error);
         }
     };
 

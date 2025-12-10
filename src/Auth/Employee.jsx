@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { FcGoogle } from 'react-icons/fc';
 import { useNavigate } from 'react-router-dom';
-import { registerEmployee, signInWithGoogle, getFieldError, uploadImageToImgBB } from './authService';
+import { registerEmployee, getFieldError, uploadImageToImgBB } from './authService';
 
 const initialForm = {
     name: '',
@@ -49,31 +48,12 @@ const Employee = () => {
         }
     };
 
-    const handleGoogleRegister = async () => {
-        setLoading(true);
-        setError('');
-        setSuccess('');
-
-        const result = await signInWithGoogle('employee');
-        
-        if (result.success) {
-            setSuccess('Google registration successful! Redirecting...');
-            setTimeout(() => {
-                navigate('/');
-            }, 1500);
-        } else {
-            setError(result.error);
-        }
-        
-        setLoading(false);
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         const allTouched = { name: true, email: true, password: true, dateOfBirth: true };
         setTouched(allTouched);
 
-        if (!form.name || !form.email || !form.password || !form.dateOfBirth) {
+        if (!form.name || !form.email || !form.dateOfBirth || !form.password) {
             setError('Please fill in all required fields.');
             return;
         }
@@ -164,11 +144,6 @@ const Employee = () => {
                             {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Register'}
                         </button>
                     </form>
-                    <div className="divider">OR</div>
-                    <button type="button" onClick={handleGoogleRegister} className="btn btn-outline w-full gap-2" disabled={loading}>
-                        <FcGoogle className="text-xl" />
-                        {loading ? 'Signing in...' : 'Continue with Google'}
-                    </button>
                 </div>
                 <div className="hidden md:flex items-center justify-center">
                     <div className="relative overflow-hidden rounded-2xl shadow-2xl bg-linear-to-br from-black via-gray-900 to-gray-700 text-white w-full h-full min-h-[520px] p-8 lg:p-10 flex flex-col justify-between">

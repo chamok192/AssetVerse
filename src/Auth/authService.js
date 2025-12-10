@@ -3,17 +3,12 @@ import {
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword, 
     updateProfile,
-    signInWithPopup, 
-    GoogleAuthProvider,
     signOut 
 } from 'firebase/auth';
 import { auth } from '../FireBase/firebase.init';
 
 const imageHostKey = import.meta.env.VITE_image_host_api_key;
 
-const googleProvider = new GoogleAuthProvider();
-
-// Validation utilities
 const validateEmail = (email) => {
     return email && email.includes('@');
 };
@@ -64,7 +59,6 @@ export const uploadImageToImgBB = async (file) => {
     }
 };
 
-// Login service
 export const loginWithEmail = async (email, password) => {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -102,7 +96,6 @@ export const loginWithEmail = async (email, password) => {
     }
 };
 
-// Employee registration service
 export const registerEmployee = async (formData) => {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
@@ -142,7 +135,6 @@ export const registerEmployee = async (formData) => {
     }
 };
 
-// HR Manager registration service
 export const registerHRManager = async (formData) => {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
@@ -187,47 +179,6 @@ export const registerHRManager = async (formData) => {
     }
 };
 
-// Google authentication service
-export const signInWithGoogle = async (userRole = 'employee') => {
-    try {
-        const result = await signInWithPopup(auth, googleProvider);
-        const user = result.user;
-
-        const userData = {
-            uid: user.uid,
-            name: user.displayName || 'User',
-            email: user.email,
-            profileImage: user.photoURL || '',
-            avatar: user.photoURL || '',
-            dateOfBirth: '',
-            role: userRole,
-            ...(userRole === 'hr' && {
-                companyName: '',
-                companyLogo: '',
-                packageLimit: 5,
-                currentEmployees: 0,
-                subscription: 'basic'
-            })
-        };
-        
-        localStorage.setItem('userData', JSON.stringify(userData));
-        window.dispatchEvent(new Event('storage'));
-
-        return { success: true, user, userData };
-    } catch (error) {
-        let errorMessage = 'Google authentication failed. Please try again.';
-        
-        if (error.code === 'auth/popup-closed-by-user') {
-            errorMessage = 'Registration cancelled. Please try again.';
-        } else if (error.code === 'auth/popup-blocked') {
-            errorMessage = 'Popup blocked. Please allow popups for this site.';
-        }
-        
-        return { success: false, error: errorMessage };
-    }
-};
-
-// Logout service
 export const logoutUser = async () => {
     try {
         await signOut(auth);
