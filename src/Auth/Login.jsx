@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginWithEmail, getFieldError, validatePassword } from './authService';
+import { getUserByEmail } from '../Services/api';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -34,6 +35,17 @@ const Login = () => {
         const result = await loginWithEmail(form.email, form.password);
         
         if (result.success) {
+            const dbUser = await getUserByEmail(form.email);
+            if (dbUser.success && dbUser.data) {
+                const mergedData = {
+                    ...result.userData,
+                    ...dbUser.data,
+                    uid: result.user.uid
+                };
+                localStorage.setItem('userData', JSON.stringify(mergedData));
+                window.dispatchEvent(new Event('storage'));
+            }
+            
             setSuccess('Login successful! Redirecting...');
             setTimeout(() => {
                 navigate('/');

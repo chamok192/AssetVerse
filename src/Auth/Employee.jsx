@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { registerEmployee, getFieldError, uploadImageToImgBB } from './authService';
+import { createUser } from '../Services/api';
 
 const initialForm = {
     name: '',
@@ -83,6 +84,15 @@ const Employee = () => {
         });
         
         if (result.success) {
+            await createUser({
+                uid: result.user.uid,
+                name: form.name,
+                email: form.email,
+                profileImage: profileImageUrl,
+                dateOfBirth: form.dateOfBirth,
+                role: 'employee'
+            });
+            
             setSuccess('Registration successful! Redirecting...');
             setTimeout(() => {
                 navigate('/');
