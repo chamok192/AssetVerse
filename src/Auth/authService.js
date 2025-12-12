@@ -8,6 +8,7 @@ import {
 import { auth } from '../FireBase/firebase.init';
 
 const imageHostKey = import.meta.env.VITE_image_host_api_key;
+const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 const validateEmail = (email) => {
     return email && email.includes('@');
@@ -63,6 +64,17 @@ export const loginWithEmail = async (email, password) => {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
+
+        const tokenRes = await axios.post(`${apiBase}/api/auth/login`, {
+            email: email,
+            uid: user.uid
+        });
+
+        const token = tokenRes.data?.token;
+        if (token) {
+            localStorage.setItem('token', token);
+            sessionStorage.setItem('token', token);
+        }
 
         const existingData = JSON.parse(localStorage.getItem('userData')) || {};
         const userData = {
