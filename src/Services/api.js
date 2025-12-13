@@ -11,8 +11,14 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    console.log('[API Request]', config.method.toUpperCase(), config.url);
+    console.log('[Token present]', Boolean(token));
     if (token) {
+        console.log('[Token length]', token.length);
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('[Auth header set]', config.headers.Authorization.substring(0, 20) + '...');
+    } else {
+        console.warn('[No token found in localStorage or sessionStorage]');
     }
     return config;
 }, (error) => Promise.reject(error));
@@ -20,7 +26,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
             localStorage.removeItem('token');
             sessionStorage.removeItem('token');
             localStorage.removeItem('userData');
@@ -46,7 +52,12 @@ export const createUser = async (userData) => {
     } catch (error) {
         const serverMessage = error.response?.data?.message || error.response?.data?.error;
         const status = error.response?.status;
-        console.error('createUser error:', { status, serverMessage, data: error.response?.data });
+        const fullError = error.response?.data;
+        console.error('createUser error:', { status, serverMessage, data: fullError });
+        console.error('Request payload was:', userData);
+        if (fullError?.errors) {
+            console.error('Validation errors:', fullError.errors);
+        }
         return { success: false, error: serverMessage || `Failed to create user (status ${status || 'unknown'})` };
     }
 };
@@ -71,37 +82,61 @@ export const updateUser = async (userId, userData) => {
 
 export const getAssets = async () => {
     try {
+        console.log('[getAssets] Fetching from /api/assets');
         const response = await api.get('/api/assets');
-        return { success: true, data: response.data };
+        console.log('[getAssets] Success:', response.data);
+        return { success: response.data.success, data: response.data.data };
     } catch (error) {
-        return { success: false, error: error.response?.data?.message || 'Failed to fetch assets' };
+        console.error('[getAssets] Error:', {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            message: error.message
+        });
+        return { success: false, error: error.response?.data?.error || error.response?.data?.message || 'Failed to fetch assets' };
     }
 };
 
 export const createAsset = async (assetData) => {
     try {
+        console.log('[createAsset] Payload:', assetData);
         const response = await api.post('/api/assets', assetData);
-        return { success: true, data: response.data };
+        console.log('[createAsset] Success:', response.data);
+        return { success: response.data.success, data: response.data.data };
     } catch (error) {
-        return { success: false, error: error.response?.data?.message || 'Failed to create asset' };
+        console.error('[createAsset] Error:', {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            message: error.message
+        });
+        return { success: false, error: error.response?.data?.error || error.response?.data?.message || 'Failed to create asset' };
     }
 };
 
 export const getAssetById = async (assetId) => {
     try {
         const response = await api.get(`/api/assets/${assetId}`);
-        return { success: true, data: response.data };
+        return { success: response.data.success, data: response.data.data };
     } catch (error) {
-        return { success: false, error: error.response?.data?.message || 'Failed to fetch asset' };
+        return { success: false, error: error.response?.data?.error || error.response?.data?.message || 'Failed to fetch asset' };
     }
 };
 
 export const updateAsset = async (assetId, assetData) => {
     try {
-        const response = await api.put(`/api/assets/${assetId}`, assetData);
-        return { success: true, data: response.data };
+        console.log('[updateAsset] ID:', assetId, 'Payload:', assetData);
+        const response = await api.patch(`/api/assets/${assetId}`, assetData);
+        console.log('[updateAsset] Success:', response.data);
+        return { success: response.data.success, data: response.data.data };
     } catch (error) {
-        return { success: false, error: error.response?.data?.message || 'Failed to update asset' };
+        console.error('[updateAsset] Error:', {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            message: error.message
+        });
+        return { success: false, error: error.response?.data?.error || error.response?.data?.message || 'Failed to update asset' };
     }
 };
 
@@ -117,36 +152,36 @@ export const deleteAsset = async (assetId) => {
 export const getRequests = async () => {
     try {
         const response = await api.get('/api/requests');
-        return { success: true, data: response.data };
+        return { success: response.data.success, data: response.data.data };
     } catch (error) {
-        return { success: false, error: error.response?.data?.message || 'Failed to fetch requests' };
+        return { success: false, error: error.response?.data?.error || error.response?.data?.message || 'Failed to fetch requests' };
     }
 };
 
 export const approveRequest = async (requestId) => {
     try {
-        const response = await api.post(`/api/requests/${requestId}/approve`);
-        return { success: true, data: response.data };
+        const response = await api.put(`/api/requests/${requestId}/approve`);
+        return { success: response.data.success, data: response.data.data };
     } catch (error) {
-        return { success: false, error: error.response?.data?.message || 'Failed to approve request' };
+        return { success: false, error: error.response?.data?.error || error.response?.data?.message || 'Failed to approve request' };
     }
 };
 
 export const rejectRequest = async (requestId) => {
     try {
-        const response = await api.post(`/api/requests/${requestId}/reject`);
-        return { success: true, data: response.data };
+        const response = await api.put(`/api/requests/${requestId}/reject`);
+        return { success: response.data.success, data: response.data.data };
     } catch (error) {
-        return { success: false, error: error.response?.data?.message || 'Failed to reject request' };
+        return { success: false, error: error.response?.data?.error || error.response?.data?.message || 'Failed to reject request' };
     }
 };
 
 export const getEmployees = async () => {
     try {
         const response = await api.get('/api/employees');
-        return { success: true, data: response.data };
+        return { success: response.data.success, data: response.data.data };
     } catch (error) {
-        return { success: false, error: error.response?.data?.message || 'Failed to fetch employees' };
+        return { success: false, error: error.response?.data?.error || error.response?.data?.message || 'Failed to fetch employees' };
     }
 };
 
@@ -162,18 +197,18 @@ export const removeEmployee = async (employeeId) => {
 export const getPaymentHistory = async () => {
     try {
         const response = await api.get('/api/payments/history');
-        return { success: true, data: response.data };
+        return { success: response.data.success, data: response.data.data };
     } catch (error) {
-        return { success: false, error: error.response?.data?.message || 'Failed to fetch payment history' };
+        return { success: false, error: error.response?.data?.error || error.response?.data?.message || 'Failed to fetch payment history' };
     }
 };
 
 export const createCheckoutSession = async (packageId) => {
     try {
         const response = await api.post('/api/payments/checkout', { packageId });
-        return { success: true, data: response.data };
+        return { success: response.data.success, data: response.data.data };
     } catch (error) {
-        return { success: false, error: error.response?.data?.message || 'Failed to start checkout' };
+        return { success: false, error: error.response?.data?.error || error.response?.data?.message || 'Failed to start checkout' };
     }
 };
 

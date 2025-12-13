@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { registerEmployee, getFieldError, uploadImageToImgBB } from './authService';
-import { createUser } from '../Services/api';
 
 const initialForm = {
     name: '',
@@ -9,7 +8,7 @@ const initialForm = {
     password: '',
     dateOfBirth: '',
     profileImage: '',
-    role: 'employee'
+    role: 'Employee'
 };
 
 const Employee = () => {
@@ -84,22 +83,6 @@ const Employee = () => {
         });
         
         if (result.success) {
-            const dbResult = await createUser({
-                uid: result.user.uid,
-                name: form.name,
-                email: form.email,
-                profileImage: profileImageUrl,
-                dateOfBirth: form.dateOfBirth,
-                role: 'employee'
-            });
-            
-            if (!dbResult.success) {
-                console.error('MongoDB save failed:', dbResult.error);
-                setError('Firebase saved but MongoDB failed: ' + dbResult.error);
-                setLoading(false);
-                return;
-            }
-            
             setSuccess('Registration successful! Redirecting...');
             setTimeout(() => {
                 navigate('/');

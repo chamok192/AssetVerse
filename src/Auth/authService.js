@@ -121,12 +121,25 @@ export const registerEmployee = async (formData) => {
         const userData = {
             uid: user.uid,
             name: formData.name,
-            email: user.email,
+            email: formData.email,
             profileImage: formData.profileImage || '',
-            avatar: formData.profileImage || '',
             dateOfBirth: formData.dateOfBirth || '',
-            role: 'employee'
+            role: 'Employee'
         };
+
+        // Sync user to MongoDB backend
+        try {
+            console.log('Syncing employee to backend with payload:', userData);
+            console.log('Payload JSON:', JSON.stringify(userData, null, 2));
+            const syncResponse = await axios.post(`${apiBase}/api/users`, userData);
+            console.log('Backend sync successful:', syncResponse.data);
+        } catch (apiError) {
+            console.error('Full error object:', apiError);
+            console.error('Status:', apiError.response?.status);
+            console.error('Response data:', apiError.response?.data);
+            console.warn('Failed to sync employee to backend:', apiError.response?.data || apiError.message);
+            // Don't block registration if backend sync fails; user can retry
+        }
         
         localStorage.setItem('userData', JSON.stringify(userData));
         window.dispatchEvent(new Event('storage'));
@@ -160,22 +173,52 @@ export const registerHRManager = async (formData) => {
         const userData = {
             uid: user.uid,
             name: formData.name,
-            email: user.email,
+            email: formData.email,
+            role: 'HR'
+        };
+
+        // Sync user to MongoDB backend - start with minimal fields
+        try {
+            console.log('Syncing HR manager to backend with payload:', userData);
+            console.log('Payload JSON:', JSON.stringify(userData, null, 2));
+            const syncResponse = await axios.post(`${apiBase}/api/users`, userData);
+            console.log('Backend sync successful:', syncResponse.data);
+        } catch (apiError) {
+            console.error('Full error object:', apiError);
+            console.error('Status:', apiError.response?.status);
+            console.error('Response data:', apiError.response?.data);
+            const errorDetails = apiError.response?.data;
+            console.warn('Failed to sync HR manager to backend:', errorDetails || apiError.message);
+            if (errorDetails?.errors && Array.isArray(errorDetails.errors)) {
+                console.error('Number of validation errors:', errorDetails.errors.length);
+                errorDetails.errors.forEach((err, idx) => {
+                    console.error(`Error ${idx}:`, err);
+                    console.error(`  Field: ${err.field || err.path || 'unknown'}`);
+                    console.error(`  Message: ${err.message || err.msg || 'unknown'}`);
+                });
+            }
+            // Don't block registration if backend sync fails; user can retry
+        }
+
+        // Add remaining profile data after successful DB sync
+        const fullUserData = {
+            uid: user.uid,
+            name: formData.name,
+            email: formData.email,
             profileImage: formData.profileImage || '',
-            avatar: formData.profileImage || '',
+            dateOfBirth: formData.dateOfBirth || '',
+            role: 'HR',
             companyName: formData.companyName || '',
             companyLogo: formData.companyLogo || '',
-            dateOfBirth: formData.dateOfBirth || '',
-            role: 'hr',
-            packageLimit: formData.packageLimit || 5,
+            packageLimit: parseInt(formData.packageLimit) || 5,
             currentEmployees: 0,
             subscription: formData.subscription || 'basic'
         };
         
-        localStorage.setItem('userData', JSON.stringify(userData));
+        localStorage.setItem('userData', JSON.stringify(fullUserData));
         window.dispatchEvent(new Event('storage'));
 
-        return { success: true, user, userData };
+        return { success: true, user, userData: fullUserData };
     } catch (error) {
         let errorMessage = 'Registration failed. Please try again.';
         

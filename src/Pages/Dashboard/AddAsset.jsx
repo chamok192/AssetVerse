@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createAsset, getAssetById, updateAsset } from "../../Services/api";
+import { uploadImageToImgBB } from "../../Auth/authService";
 import DashboardLayout from "./DashboardLayout";
 
 const AddAsset = () => {
@@ -26,12 +27,12 @@ const AddAsset = () => {
         queryFn: async () => {
             const result = await getAssetById(assetId);
             if (result.success && result.data) {
-                const imageUrl = result.data.image || result.data.imageUrl || "";
+                const imageUrl = result.data.productImage || result.data.image || "";
                 setForm({
-                    name: result.data.name || "",
+                    name: result.data.productName || result.data.name || "",
                     image: imageUrl,
-                    type: result.data.type || "returnable",
-                    quantity: result.data.quantity ?? 1
+                    type: result.data.productType || result.data.type || "returnable",
+                    quantity: result.data.productQuantity ?? result.data.quantity ?? 1
                 });
                 setImagePreview(imageUrl);
                 return result.data;
@@ -104,20 +105,34 @@ const AddAsset = () => {
         e.preventDefault();
         setError("");
 
-        // Convert image to base64 if file is selected
-        let imageData = form.image.trim();
+        // Validate required fields
+        if (!form.name.trim()) {
+            setError("Asset name is required");
+            return;
+        }
+        if (!form.type) {
+            setError("Asset type is required");
+            return;
+        }
+        if (form.quantity <= 0) {
+            setError("Quantity must be greater than 0");
+            return;
+        }
+
+        // Upload image to ImgBB if a new file is selected
+        let imageUrl = form.image.trim();
         if (imageFile) {
-            const reader = new FileReader();
-            imageData = await new Promise((resolve, reject) => {
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(imageFile);
-            });
+            const uploadResult = await uploadImageToImgBB(imageFile);
+            if (!uploadResult.success) {
+                setError(uploadResult.error || "Failed to upload image");
+                return;
+            }
+            imageUrl = uploadResult.url;
         }
 
         const payload = {
-            name: form.name.trim(),
-            image: imageData,
+            name: form.name,
+            image: imageUrl,
             type: form.type,
             quantity: Number(form.quantity) || 0
         };

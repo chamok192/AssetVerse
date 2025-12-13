@@ -12,6 +12,8 @@ import AllRequests from "../Pages/Dashboard/AllRequests";
 import EmployeeList from "../Pages/Dashboard/EmployeeList";
 import UpgradePackage from "../Pages/Dashboard/UpgradePackage";
 import HRProfile from "../Pages/Dashboard/HRProfile";
+import PrivateRoute from "./PrivateRoute";
+import RoleBasedRedirect from "./RoleBasedRedirect";
 
 export const router = createBrowserRouter([
     {
@@ -41,31 +43,31 @@ export const router = createBrowserRouter([
             },
             {
                 path: "hr/assets",
-                Component: HRAssetDashboard
+                element: <PrivateRoute requiredRole="HR"><HRAssetDashboard /></PrivateRoute>
             },
             {
                 path: "hr/assets/new",
-                Component: AddAsset
+                element: <PrivateRoute requiredRole="HR"><AddAsset /></PrivateRoute>
             },
             {
                 path: "hr/assets/:assetId/edit",
-                Component: AddAsset
+                element: <PrivateRoute requiredRole="HR"><AddAsset /></PrivateRoute>
             },
             {
                 path: "hr/requests",
-                Component: AllRequests
+                element: <PrivateRoute requiredRole="HR"><AllRequests /></PrivateRoute>
             },
             {
                 path: "hr/employees",
-                Component: EmployeeList
+                element: <PrivateRoute requiredRole="HR"><EmployeeList /></PrivateRoute>
             },
             {
                 path: "hr/upgrade",
-                Component: UpgradePackage
+                element: <PrivateRoute requiredRole="HR"><UpgradePackage /></PrivateRoute>
             },
             {
                 path: "profile",
-                Component: HRProfile
+                element: <PrivateRoute requiredRole="HR"><HRProfile /></PrivateRoute>
             },
             {
                 path: "*",

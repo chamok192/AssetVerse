@@ -11,7 +11,7 @@ const initialForm = {
     email: '',
     password: '',
     dateOfBirth: '',
-    role: 'hr',
+    role: 'HR',
     packageLimit: 5,
     currentEmployees: 0,
     subscription: 'basic'
@@ -122,30 +122,9 @@ const HRManager = () => {
         });
         
         if (result.success) {
-            const dbResult = await createUser({
-                uid: result.user.uid,
-                name: form.name,
-                email: form.email,
-                profileImage: profileImageUrl,
-                dateOfBirth: form.dateOfBirth,
-                role: 'hr',
-                companyName: form.companyName,
-                companyLogo: companyLogoUrl,
-                packageLimit: form.packageLimit,
-                currentEmployees: 0,
-                subscription: form.subscription
-            });
-            
-            if (!dbResult.success) {
-                console.error('MongoDB save failed:', dbResult.error);
-                setError('Firebase saved but MongoDB failed: ' + dbResult.error);
-                setLoading(false);
-                return;
-            }
-            
             setSuccess('Registration successful! Redirecting...');
             setTimeout(() => {
-                navigate('/');
+                navigate('/hr/assets');
             }, 2000);
         } else {
             setError(result.error);

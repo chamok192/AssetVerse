@@ -46,13 +46,18 @@ const HRAssetDashboard = () => {
         const term = search.trim().toLowerCase();
 
         const filtered = assets.filter((asset) => {
-            const matchesSearch = !term ||
-                asset.name?.toLowerCase().includes(term) ||
-                asset.type?.toLowerCase().includes(term) ||
-                asset.tag?.toLowerCase?.()?.includes(term) ||
-                asset.serial?.toLowerCase?.()?.includes(term);
+            const assetName = asset.productName || asset.name || "";
+            const assetType = asset.productType || asset.type || "";
+            const assetTag = asset.tag || "";
+            const assetSerial = asset.serial || "";
 
-            const matchesType = typeFilter === "all" || (asset.type?.toLowerCase() === typeFilter);
+            const matchesSearch = !term ||
+                assetName.toLowerCase().includes(term) ||
+                assetType.toLowerCase().includes(term) ||
+                assetTag.toLowerCase().includes(term) ||
+                assetSerial.toLowerCase().includes(term);
+
+            const matchesType = typeFilter === "all" || (assetType.toLowerCase() === typeFilter);
             const matchesCategory = categoryFilter === "all" || (asset.category === categoryFilter);
             return matchesSearch && matchesType && matchesCategory;
         });
@@ -60,17 +65,21 @@ const HRAssetDashboard = () => {
         const sorted = [...filtered].sort((a, b) => {
             if (sortKey === "date-desc") return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
             if (sortKey === "date-asc") return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
-            if (sortKey === "qty-desc") return (b.quantity || 0) - (a.quantity || 0);
-            if (sortKey === "qty-asc") return (a.quantity || 0) - (b.quantity || 0);
-            return (a.name || "").localeCompare(b.name || "");
+            const qtyA = a.productQuantity ?? a.quantity ?? 0;
+            const qtyB = b.productQuantity ?? b.quantity ?? 0;
+            if (sortKey === "qty-desc") return qtyB - qtyA;
+            if (sortKey === "qty-asc") return qtyA - qtyB;
+            const nameA = a.productName || a.name || "";
+            const nameB = b.productName || b.name || "";
+            return nameA.localeCompare(nameB);
         });
 
         return sorted;
     }, [assets, search, typeFilter, categoryFilter, sortKey]);
 
     const totals = useMemo(() => {
-        const totalQuantity = assets.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
-        const lowStock = assets.filter((item) => (Number(item.quantity) || 0) <= 5).length;
+        const totalQuantity = assets.reduce((sum, item) => sum + (Number(item.productQuantity || item.quantity) || 0), 0);
+        const lowStock = assets.filter((item) => (Number(item.productQuantity || item.quantity) || 0) <= 5).length;
         return { totalQuantity, lowStock, count: assets.length };
     }, [assets]);
 
@@ -248,26 +257,30 @@ const HRAssetDashboard = () => {
                         )}
 
                         {!isLoading && filteredAssets.map((asset) => {
-                            const qty = asset.quantity ?? 0;
+                            const qty = asset.productQuantity ?? asset.quantity ?? 0;
                             const qtyColor = qty <= 5 ? "text-warning" : "text-success";
+                            const assetName = asset.productName || asset.name || "Untitled";
+                            const assetImage = asset.productImage || asset.image || asset.imageUrl || "https://via.placeholder.com/100";
+                            const assetType = asset.productType || asset.type || "N/A";
+                            
                             return (
                                 <tr key={asset._id} className="hover">
                                     <td>
                                         <div className="avatar">
                                             <div className="mask mask-squircle h-12 w-12 bg-base-200">
                                                 <img
-                                                    src={asset.image || asset.imageUrl || "https://via.placeholder.com/100"}
-                                                    alt={asset.name || "Asset"}
+                                                    src={assetImage}
+                                                    alt={assetName}
                                                 />
                                             </div>
                                         </div>
                                     </td>
                                     <td>
-                                        <div className="font-semibold">{asset.name || "Untitled"}</div>
+                                        <div className="font-semibold">{assetName}</div>
                                         <div className="text-sm text-base-content/60">{asset.serial || asset.tag || ""}</div>
                                     </td>
                                     <td>
-                                        <span className="badge badge-soft badge-primary capitalize">{asset.type || "N/A"}</span>
+                                        <span className="badge badge-soft badge-primary capitalize">{assetType}</span>
                                     </td>
                                     <td className={`font-semibold ${qtyColor}`}>{qty}</td>
                                     <td>{asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : "-"}</td>

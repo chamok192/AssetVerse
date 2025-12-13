@@ -47,11 +47,14 @@ const Login = () => {
                 
                 // Redirect to appropriate dashboard based on role
                 setSuccess('Login successful! Redirecting...');
+                const userRole = (mergedData.role || '').toLowerCase();
                 setTimeout(() => {
-                    if (mergedData.role === 'hr') {
+                    if (userRole === 'hr') {
                         navigate('/hr/assets');
+                    } else if (userRole === 'employee') {
+                        navigate('/employee/dashboard');
                     } else {
-                        navigate('/employee/assets');
+                        navigate('/');
                     }
                 }, 1500);
             } else {
