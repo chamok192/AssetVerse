@@ -44,12 +44,22 @@ const Login = () => {
                 };
                 localStorage.setItem('userData', JSON.stringify(mergedData));
                 window.dispatchEvent(new Event('storage'));
+                
+                // Redirect to appropriate dashboard based on role
+                setSuccess('Login successful! Redirecting...');
+                setTimeout(() => {
+                    if (mergedData.role === 'hr') {
+                        navigate('/hr/assets');
+                    } else {
+                        navigate('/employee/assets');
+                    }
+                }, 1500);
+            } else {
+                setSuccess('Login successful! Redirecting...');
+                setTimeout(() => {
+                    navigate('/');
+                }, 1500);
             }
-            
-            setSuccess('Login successful! Redirecting...');
-            setTimeout(() => {
-                navigate('/');
-            }, 1500);
         } else {
             setError(result.error);
         }

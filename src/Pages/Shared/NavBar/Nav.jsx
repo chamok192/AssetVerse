@@ -4,6 +4,7 @@ import { Link, NavLink } from 'react-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../../FireBase/firebase.init';
 import { logoutUser } from '../../../Auth/authService';
+import { useLocation } from 'react-router';
 
 const publicLinks = [
     { label: 'Home', to: '/' },
@@ -24,6 +25,7 @@ const hrManagerMenu = [
     { label: 'Asset List', to: '/hr/assets' },
     { label: 'Add Asset', to: '/hr/assets/new' },
     { label: 'All Requests', to: '/hr/requests' },
+    { label: 'Upgrade Package', to: '/hr/upgrade' },
     { label: 'Employee List', to: '/hr/employees' },
     { label: 'Profile', to: '/profile' },
     { label: 'Logout', action: 'logout' }
@@ -32,6 +34,9 @@ const hrManagerMenu = [
 const Nav = () => {
     const [user, setUser] = useState(null);
     const [activePricing, setActivePricing] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const [profileOpen, setProfileOpen] = useState(false);
+    const location = useLocation();
 
     useEffect(() => {
         const updateUserState = (currentUser) => {
@@ -85,14 +90,21 @@ const Nav = () => {
 
 
     useEffect(() => {
-        // User role tracking
-    }, [user]);
+        setMobileOpen(false);
+        setProfileOpen(false);
+    }, [location.pathname]);
 
     const roleMenu = user?.role === 'hr' ? hrManagerMenu : employeeMenu;
+
+    const closeMenus = () => {
+        setMobileOpen(false);
+        setProfileOpen(false);
+    };
 
     const handleLogout = async () => {
         await logoutUser();
         setUser(null);
+        closeMenus();
     };
 
     const linkClass = ({ isActive }) => {
@@ -120,13 +132,14 @@ const Nav = () => {
                         onClick={(e) => {
                             e.preventDefault();
                             handleScrollToSection(item.to.substring(1));
+                            closeMenus();
                         }}
                         className="text-base-content/70 hover:text-base-content"
                     >
                         {item.label}
                     </a>
                 ) : (
-                    <NavLink to={item.to} className={linkClass}>{item.label}</NavLink>
+                    <NavLink to={item.to} className={linkClass} onClick={closeMenus}>{item.label}</NavLink>
                 )
             ) : (
                 <button type="button" onClick={handleLogout}>{item.label}</button>
@@ -137,8 +150,13 @@ const Nav = () => {
     return (
         <div className="navbar bg-base-100 shadow-sm sticky top-0 z-50">
             <div className="navbar-start">
-                <div className="dropdown">
-                    <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
+                <div className={`dropdown ${mobileOpen ? 'dropdown-open' : ''}`}>
+                    <div
+                        tabIndex={0}
+                        role="button"
+                        className="btn btn-ghost lg:hidden"
+                        onClick={() => setMobileOpen((prev) => !prev)}
+                    >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" />
                         </svg>
@@ -160,7 +178,7 @@ const Nav = () => {
                                         {item.label}
                                     </a>
                                 ) : (
-                                    <NavLink to={item.to} className={linkClass}>{item.label}</NavLink>
+                                    <NavLink to={item.to} className={linkClass} onClick={closeMenus}>{item.label}</NavLink>
                                 )}
                             </li>
                         ))}
@@ -203,8 +221,13 @@ const Nav = () => {
                     <Link to="/login" className="btn btn-neutral">Login</Link>
                 )}
                 {user && (
-                    <div className="dropdown dropdown-end">
-                        <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+                    <div className={`dropdown dropdown-end ${profileOpen ? 'dropdown-open' : ''}`}>
+                        <div
+                            tabIndex={0}
+                            role="button"
+                            className="btn btn-ghost btn-circle avatar"
+                            onClick={() => setProfileOpen((prev) => !prev)}
+                        >
                             <div className="w-10 rounded-full">
                                 <img alt={user.name} src={user.avatar} />
                             </div>

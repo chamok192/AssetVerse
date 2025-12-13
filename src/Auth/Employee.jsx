@@ -84,7 +84,7 @@ const Employee = () => {
         });
         
         if (result.success) {
-            await createUser({
+            const dbResult = await createUser({
                 uid: result.user.uid,
                 name: form.name,
                 email: form.email,
@@ -92,6 +92,13 @@ const Employee = () => {
                 dateOfBirth: form.dateOfBirth,
                 role: 'employee'
             });
+            
+            if (!dbResult.success) {
+                console.error('MongoDB save failed:', dbResult.error);
+                setError('Firebase saved but MongoDB failed: ' + dbResult.error);
+                setLoading(false);
+                return;
+            }
             
             setSuccess('Registration successful! Redirecting...');
             setTimeout(() => {
