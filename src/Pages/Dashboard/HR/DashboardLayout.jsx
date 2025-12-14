@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router";
-import { logoutUser } from "../../Auth/authService";
+import { logoutUser } from "../../../Auth/authService";
 
 const sidebarLinks = [
     { label: "Dashboard", to: "/hr/assets", exact: true },

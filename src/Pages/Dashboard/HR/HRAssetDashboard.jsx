@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     deleteAsset,
     getAssets
-} from "../../Services/api";
+} from "../../../Services/api";
 import DashboardLayout from "./DashboardLayout";
 
 const HRAssetDashboard = () => {
@@ -260,7 +260,7 @@ const HRAssetDashboard = () => {
                             const qty = asset.productQuantity ?? asset.quantity ?? 0;
                             const qtyColor = qty <= 5 ? "text-warning" : "text-success";
                             const assetName = asset.productName || asset.name || "Untitled";
-                            const assetImage = asset.productImage || asset.image || asset.imageUrl || "https://via.placeholder.com/100";
+                            const assetImage = asset.productImage || asset.image || asset.imageUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e0e0e0' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='12' fill='%23999' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E";
                             const assetType = asset.productType || asset.type || "N/A";
                             
                             return (

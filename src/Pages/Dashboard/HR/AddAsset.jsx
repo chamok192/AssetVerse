@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createAsset, getAssetById, updateAsset } from "../../Services/api";
-import { uploadImageToImgBB } from "../../Auth/authService";
+import { createAsset, getAssetById, updateAsset } from "../../../Services/api";
+import { uploadImageToImgBB } from "../../../Auth/authService";
 import DashboardLayout from "./DashboardLayout";
 
 const AddAsset = () => {
@@ -22,28 +22,38 @@ const AddAsset = () => {
     const [error, setError] = useState("");
 
     // Fetch asset data if editing
-    const { isLoading: assetLoading } = useQuery({
+    const { data: assetData, isLoading: assetLoading } = useQuery({
         queryKey: ['asset', assetId],
         queryFn: async () => {
             const result = await getAssetById(assetId);
             if (result.success && result.data) {
-                const imageUrl = result.data.productImage || result.data.image || "";
-                setForm({
-                    name: result.data.productName || result.data.name || "",
-                    image: imageUrl,
-                    type: result.data.productType || result.data.type || "returnable",
-                    quantity: result.data.productQuantity ?? result.data.quantity ?? 1
-                });
-                setImagePreview(imageUrl);
                 return result.data;
             } else {
-                setError(result.error || "Failed to load asset");
-                throw new Error(result.error);
+                const errorMsg = result.error || "Failed to load asset";
+                setError(errorMsg);
+                throw new Error(errorMsg);
             }
         },
         enabled: isEdit,
         staleTime: Infinity
     });
+
+    // Load asset data into form when data is fetched
+    useEffect(() => {
+        if (!assetData || !isEdit) return;
+        
+        const imageUrl = assetData.productImage || assetData.image || "";
+        const handler = () => {
+            setForm({
+                name: assetData.productName || assetData.name || "",
+                image: imageUrl,
+                type: assetData.productType || assetData.type || "returnable",
+                quantity: assetData.productQuantity ?? assetData.quantity ?? 1
+            });
+            setImagePreview(imageUrl);
+        };
+        handler();
+    }, [assetData, isEdit]);
 
     // Mutation for creating asset
     const createMutation = useMutation({
@@ -66,7 +76,7 @@ const AddAsset = () => {
             navigate("/hr/assets");
         },
         onError: (err) => {
-            setError(err?.message || "Failed to update asset");
+            setError(err?.message || err?.error || "Failed to update asset");
         }
     });
 

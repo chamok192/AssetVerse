@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { approveRequest, getRequests, rejectRequest } from "../../Services/api";
+import { approveRequest, getRequests, rejectRequest } from "../../../Services/api";
 import DashboardLayout from "./DashboardLayout";
 
 const statusColors = {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { auth } from "../../FireBase/firebase.init";
-import { updateUser, getUserByEmail } from "../../Services/api";
+import { auth } from "../../../FireBase/firebase.init";
+import { updateUser, getUserByEmail } from "../../../Services/api";
 import DashboardLayout from "./DashboardLayout";
 
 const HRProfile = () => {
@@ -64,9 +64,8 @@ const HRProfile = () => {
                     });
                 }
                 setError("");
-            } catch (err) {
+            } catch {
                 setError("Failed to load profile");
-                console.error(err);
             } finally {
                 setLoading(false);
             }
@@ -97,9 +96,8 @@ const HRProfile = () => {
             } else {
                 setError(result.error || "Failed to save profile");
             }
-        } catch (err) {
+        } catch {
             setError("Error saving profile");
-            console.error(err);
         } finally {
             setSaving(false);
         }
@@ -123,7 +121,7 @@ const HRProfile = () => {
                         <div className="avatar">
                             <div className="w-24 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 bg-base-200">
                                 <img
-                                    src={form.profileImage || "https://via.placeholder.com/200"}
+                                    src={form.profileImage || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23e0e0e0' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%23999' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E"}
                                     alt={form.name || "Profile"}
                                 />
                             </div>

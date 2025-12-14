@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getEmployees, removeEmployee } from "../../Services/api";
+import { getEmployees, removeEmployee } from "../../../Services/api";
 import DashboardLayout from "./DashboardLayout";
 
 const EmployeeList = () => {
@@ -88,7 +88,7 @@ const EmployeeList = () => {
                                     <div className="avatar">
                                         <div className="mask mask-squircle h-12 w-12 bg-base-200">
                                             <img
-                                                src={employee.photo || employee.avatar || "https://via.placeholder.com/100"}
+                                                src={employee.photo || employee.avatar || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e0e0e0' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='12' fill='%23999' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E"}
                                                 alt={employee.name || "Employee"}
                                             />
                                         </div>
