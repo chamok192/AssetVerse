@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { loadStripe } from '@stripe/stripe-js';
 import { createPaymentIntent, confirmPayment } from '../Services/api';
 
 const PaymentForm = ({ packageData, onSuccess, isLoading }) => {
@@ -11,12 +12,21 @@ const PaymentForm = ({ packageData, onSuccess, isLoading }) => {
   const [country, setCountry] = useState('Bangladesh');
   const [cardError, setCardError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [stripe, setStripe] = useState(null);
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     if (userData.name) {
       setCardholderName(userData.name);
     }
+    
+    const initStripe = async () => {
+      const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51QfZkIL8UdIoJVQ1tCMWqgB5yl3gANSxaFrJP9jJvI0e5fPnJ0E0zlHpB5PnUPiYjq5vNKX1bSPl2hGjLVbYsBAL00rrqTb7JF';
+      const stripeInstance = await loadStripe(stripeKey);
+      setStripe(stripeInstance);
+    };
+    
+    initStripe();
   }, []);
 
   const createIntentMutation = useMutation({
@@ -36,26 +46,61 @@ const PaymentForm = ({ packageData, onSuccess, isLoading }) => {
   });
 
   const confirmPaymentHandler = async (clientSecret, paymentIntentId) => {
+    if (!stripe) {
+      setCardError('Stripe not loaded. Please refresh and try again.');
+      setIsProcessing(false);
+      return;
+    }
+
     try {
-      const confirmResult = await confirmPayment({
-        paymentIntentId,
-        packageId: packageData.packageId,
-        amount: packageData.amount,
-        phoneNumber: phoneNumber,
-        cardholderName: cardholderName
+      // Confirm payment with Stripe using test card details
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: {
+            number: cardNumber.replace(/\s/g, ''),
+            exp_month: parseInt(expiration.split('/')[0]),
+            exp_year: parseInt('20' + expiration.split('/')[1]),
+            cvc: cvc
+          },
+          billing_details: {
+            name: cardholderName,
+            phone: phoneNumber,
+            address: {
+              country: country === 'Bangladesh' ? 'BD' : country
+            }
+          }
+        }
       });
 
-      if (confirmResult?.success) {
-        setCardError('');
-        setPhoneNumber('');
-        setCardNumber('');
-        setExpiration('');
-        setCvc('');
-        setCardholderName('');
-        onSuccess();
+      if (result.error) {
+        setCardError(result.error.message || 'Payment processing failed');
+        setIsProcessing(false);
+        return;
+      }
+
+      if (result.paymentIntent.status === 'succeeded') {
+        // Payment succeeded with Stripe, now confirm with backend
+        const confirmResult = await confirmPayment({
+          paymentIntentId: result.paymentIntent.id,
+          packageId: packageData.packageId,
+          amount: packageData.amount,
+          phoneNumber: phoneNumber,
+          cardholderName: cardholderName
+        });
+
+        if (confirmResult?.success) {
+          setCardError('');
+          setPhoneNumber('');
+          setCardNumber('');
+          setExpiration('');
+          setCvc('');
+          setCardholderName('');
+          onSuccess();
+        } else {
+          setCardError(confirmResult?.error || 'Failed to confirm payment with server');
+        }
       } else {
-        const errorMsg = confirmResult?.error || 'Failed to confirm payment';
-        setCardError(errorMsg);
+        setCardError(`Payment status: ${result.paymentIntent.status}`);
       }
     } catch (error) {
       setCardError(error?.message || 'Payment failed');
