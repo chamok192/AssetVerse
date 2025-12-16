@@ -2,97 +2,54 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { registerEmployee, getFieldError, uploadImageToImgBB } from './authService';
 
-const initialForm = {
-    name: '',
-    email: '',
-    password: '',
-    dateOfBirth: '',
-    profileImage: '',
-    role: 'Employee'
-};
+const init = { name: '', email: '', password: '', dateOfBirth: '', profileImage: '', role: 'Employee' };
 
 const Employee = () => {
-    const navigate = useNavigate();
-    const [form, setForm] = useState(initialForm);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const [touched, setTouched] = useState({});
-    const [loading, setLoading] = useState(false);
-    const [profilePreview, setProfilePreview] = useState('');
-    const [profileFile, setProfileFile] = useState(null);
+    const nav = useNavigate();
+    const [form, setForm] = useState(init);
+    const [err, setErr] = useState('');
+    const [suc, setSuc] = useState('');
+    const [touch, setTouch] = useState({});
+    const [load, setLoad] = useState(false);
+    const [preview, setPreview] = useState('');
+    const [file, setFile] = useState(null);
 
-    const handleFieldError = (fieldName) => {
-        return getFieldError(fieldName, form[fieldName], touched[fieldName]);
-    };
+    const getErr = (f) => getFieldError(f, form[f], touch[f]);
+    const change = (e) => { const { name, value } = e.target; setForm(p => ({ ...p, [name]: value })); setTouch(p => ({ ...p, [name]: true })); setErr(''); setSuc(''); };
+    const blur = (e) => setTouch(p => ({ ...p, [e.target.name]: true }));
+    const upFile = (e) => { const f = e.target.files?.[0]; if (f) { setFile(f); setPreview(URL.createObjectURL(f)); setForm(p => ({ ...p, profileImage: '' })); setTouch(p => ({ ...p, profileImage: true })); } };
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
-        setTouched((prev) => ({ ...prev, [name]: true }));
-        setError('');
-        setSuccess('');
-    };
-
-    const handleBlur = (e) => {
-        const { name } = e.target;
-        setTouched((prev) => ({ ...prev, [name]: true }));
-    };
-
-    const handleProfileFileChange = (e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setProfileFile(file);
-            setProfilePreview(URL.createObjectURL(file));
-            setForm((prev) => ({ ...prev, profileImage: '' }));
-            setTouched((prev) => ({ ...prev, profileImage: true }));
-        }
-    };
-
-    const handleSubmit = async (e) => {
+    const submit = async (e) => {
         e.preventDefault();
-        const allTouched = { name: true, email: true, password: true, dateOfBirth: true };
-        setTouched(allTouched);
+        setTouch({ name: true, email: true, password: true, dateOfBirth: true });
 
-        if (!form.name || !form.email || !form.dateOfBirth || !form.password) {
-            setError('Please fill in all required fields.');
-            return;
-        }
-        if (form.password.length < 6) {
-            setError('Password must be at least 6 characters.');
-            return;
-        }
+        if (!form.name || !form.email || !form.dateOfBirth || !form.password) { setErr('Please fill in all required fields.'); return; }
+        if (form.password.length < 6) { setErr('Password must be at least 6 characters.'); return; }
 
-        setLoading(true);
-        setError('');
-        setSuccess('');
+        setLoad(true);
+        setErr('');
+        setSuc('');
 
-        let profileImageUrl = form.profileImage;
-        if (profileFile) {
-            const upload = await uploadImageToImgBB(profileFile);
-            if (!upload.success) {
-                setError(upload.error);
-                setLoading(false);
-                return;
-            }
-            profileImageUrl = upload.url;
+        let img = form.profileImage;
+        if (file) {
+            const res = await uploadImageToImgBB(file);
+            if (!res.success) { setErr(res.error); setLoad(false); return; }
+            img = res.url;
         }
 
-        const result = await registerEmployee({
-            ...form,
-            profileImage: profileImageUrl
-        });
-        
-        if (result.success) {
-            setSuccess('Registration successful! Redirecting...');
-            setTimeout(() => {
-                navigate('/');
-            }, 1500);
-        } else {
-            setError(result.error);
-        }
-        
-        setLoading(false);
+        const res = await registerEmployee({ ...form, profileImage: img });
+        if (res.success) { setSuc('Registration successful! Redirecting...'); setTimeout(() => nav('/'), 1500); }
+        else { setErr(res.error); }
+        setLoad(false);
     };
+
+    const Input = ({ name, type = 'text', placeholder, label }) => (
+        <label className="form-control w-full">
+            <div className="label"><span className="label-text font-semibold">{label}</span></div>
+            <input name={name} value={form[name]} onChange={change} onBlur={blur} type={type} placeholder={placeholder} className={`input input-bordered w-full ${getErr(name) ? 'input-error' : ''}`} minLength={name === 'password' ? 6 : undefined} required />
+            {getErr(name) && <p className="text-error text-xs mt-1">{getErr(name)}</p>}
+        </label>
+    );
 
     return (
         <div className="min-h-screen bg-base-200 flex items-center justify-center px-4 py-12 overflow-x-hidden">
@@ -103,46 +60,21 @@ const Employee = () => {
                         <h1 className="text-3xl font-bold">Create your employee account</h1>
                         <p className="text-sm text-base-content/70">Use your personal email. Company affiliation will be handled after registration.</p>
                     </div>
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={submit} className="space-y-6">
+                        <Input name="name" placeholder="Your full name" label="Full Name" />
+                        <Input name="email" type="email" placeholder="personal@email.com" label="Personal Email" />
+                        <Input name="password" type="password" placeholder="Minimum 6 characters" label="Password" />
+                        <Input name="dateOfBirth" type="date" label="Date of Birth" />
                         <label className="form-control w-full">
-                            <div className="label"><span className="label-text font-semibold text-base-content">Full Name</span></div>
-                            <input name="name" value={form.name} onChange={handleChange} onBlur={handleBlur} type="text" placeholder="Your full name" className={`input input-bordered w-full ${handleFieldError('name') ? 'input-error' : ''}`} required />
-                            {handleFieldError('name') && <p className="text-error text-xs mt-1">{handleFieldError('name')}</p>}
-                        </label>
-                        <label className="form-control w-full">
-                            <div className="label"><span className="label-text font-semibold text-base-content">Personal Email</span></div>
-                            <input name="email" value={form.email} onChange={handleChange} onBlur={handleBlur} type="email" placeholder="personal@email.com" className={`input input-bordered w-full ${handleFieldError('email') ? 'input-error' : ''}`} required />
-                            {handleFieldError('email') && <p className="text-error text-xs mt-1">{handleFieldError('email')}</p>}
-                        </label>
-                        <label className="form-control w-full">
-                            <div className="label"><span className="label-text font-semibold text-base-content">Password</span></div>
-                            <input name="password" value={form.password} onChange={handleChange} onBlur={handleBlur} type="password" placeholder="Minimum 6 characters" className={`input input-bordered w-full ${handleFieldError('password') ? 'input-error' : ''}`} minLength={6} required />
-                            {handleFieldError('password') && <p className="text-error text-xs mt-1">{handleFieldError('password')}</p>}
-                        </label>
-                        <label className="form-control w-full">
-                            <div className="label"><span className="label-text font-semibold text-base-content">Date of Birth</span></div>
-                            <input name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} onBlur={handleBlur} type="date" className={`input input-bordered w-full ${handleFieldError('dateOfBirth') ? 'input-error' : ''}`} required />
-                            {handleFieldError('dateOfBirth') && <p className="text-error text-xs mt-1">{handleFieldError('dateOfBirth')}</p>}
-                        </label>
-                        <label className="form-control w-full">
-                            <div className="label"><span className="label-text font-semibold text-base-content">Upload profile image</span></div>
-                            <input name="profileImageFile" onChange={handleProfileFileChange} type="file" accept="image/*" className="file-input file-input-bordered file-input-primary w-full" />
+                            <div className="label"><span className="label-text font-semibold">Upload profile image</span></div>
+                            <input name="profileImageFile" onChange={upFile} type="file" accept="image/*" className="file-input file-input-bordered file-input-primary w-full" />
                             <div className="label"><span className="label-text-alt">We will upload to ImgBB and store the URL.</span></div>
                         </label>
-                        {profilePreview && (
-                            <div className="p-3 bg-base-200 rounded-lg flex items-center justify-center">
-                                <img src={profilePreview} alt="Profile preview" className="w-20 h-20 rounded-full object-cover" onError={() => setProfilePreview('')} />
-                            </div>
-                        )}
-                        <label className="form-control w-full">
-                            <div className="label"><span className="label-text font-semibold text-base-content">Role</span></div>
-                            <input name="role" value={form.role} disabled className="input input-bordered w-full bg-base-200" />
-                        </label>
-                        {error && <p className="text-error text-sm font-semibold">{error}</p>}
-                        {success && <p className="text-success text-sm font-semibold">{success}</p>}
-                        <button type="submit" className="btn btn-neutral w-full" disabled={loading}>
-                            {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Register'}
-                        </button>
+                        {preview && <div className="p-3 bg-base-200 rounded-lg flex items-center justify-center"><img src={preview} alt="Profile preview" className="w-20 h-20 rounded-full object-cover" onError={() => setPreview('')} /></div>}
+                        <label className="form-control w-full"><div className="label"><span className="label-text font-semibold">Role</span></div><input name="role" value={form.role} disabled className="input input-bordered w-full bg-base-200" /></label>
+                        {err && <p className="text-error text-sm font-semibold">{err}</p>}
+                        {suc && <p className="text-success text-sm font-semibold">{suc}</p>}
+                        <button type="submit" className="btn btn-neutral w-full" disabled={load}>{load ? <span className="loading loading-spinner loading-sm"></span> : 'Register'}</button>
                     </form>
                 </div>
                 <div className="hidden md:flex items-center justify-center">

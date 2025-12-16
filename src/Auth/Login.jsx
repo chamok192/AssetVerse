@@ -1,73 +1,69 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginWithEmail, getFieldError, validatePassword } from './authService';
-import { getUserByEmail } from '../Services/api';
+
+const Input = ({ name, type, placeholder, label, value, onChange }) => (
+    <label className="form-control w-full">
+        <div className="label"><span className="label-text">{label}</span></div>
+        <input 
+            name={name} 
+            value={value} 
+            onChange={onChange}
+            type={type} 
+            placeholder={placeholder} 
+            className={`input input-bordered w-full ${getFieldError(name) ? 'input-error' : ''}`} 
+            required 
+            minLength={name === 'password' ? 6 : undefined} 
+        />
+        {getFieldError(name) && <p className="text-error text-xs mt-1">{getFieldError(name)}</p>}
+    </label>
+);
 
 const Login = () => {
-    const navigate = useNavigate();
+    const nav = useNavigate();
     const [form, setForm] = useState({ email: '', password: '' });
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [err, setErr] = useState('');
+    const [suc, setSuc] = useState('');
+    const [load, setLoad] = useState(false);
 
-    const handleChange = (e) => {
+    const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
-        setError('');
+        setForm(p => ({ ...p, [name]: value }));
+        if (err) setErr('');
     };
 
-    const handleSubmit = async (e) => {
+    const handle = async (e) => {
         e.preventDefault();
-        
-        if (!form.email || !form.password) {
-            setError('Please fill in all fields.');
-            return;
-        }
-        if (!validatePassword(form.password)) {
-            setError('Password must be at least 6 characters.');
-            return;
+        if (!form.email || !form.password) { setErr('Please fill in all fields.'); return; }
+        if (!validatePassword(form.password)) { setErr('Password must be at least 6 characters.'); return; }
+
+        setLoad(true);
+        setErr('');
+        setSuc('');
+
+        const res = await loginWithEmail(form.email, form.password);
+        if (!res.success) { 
+            setErr(res.error); 
+            setLoad(false); 
+            return; 
         }
 
-        setLoading(true);
-        setError('');
-        setSuccess('');
+        const data = res.userData;
+        console.log('===== LOGIN COMPLETE =====');
+        console.log('Email:', data.email);
+        console.log('Role:', data.role);
+        console.log('Full userData:', JSON.stringify(data, null, 2));
+        console.log('=========================');
+        
+        localStorage.setItem('userData', JSON.stringify(data));
+        window.dispatchEvent(new Event('storage'));
 
-        const result = await loginWithEmail(form.email, form.password);
-        
-        if (result.success) {
-            const dbUser = await getUserByEmail(form.email);
-            if (dbUser.success && dbUser.data) {
-                const mergedData = {
-                    ...result.userData,
-                    ...dbUser.data,
-                    uid: result.user.uid
-                };
-                localStorage.setItem('userData', JSON.stringify(mergedData));
-                window.dispatchEvent(new Event('storage'));
-                
-                // Redirect to appropriate dashboard based on role
-                setSuccess('Login successful! Redirecting...');
-                const userRole = (mergedData.role || '').toLowerCase();
-                setTimeout(() => {
-                    if (userRole === 'hr') {
-                        navigate('/hr/assets');
-                    } else if (userRole === 'employee') {
-                        navigate('/employee/dashboard');
-                    } else {
-                        navigate('/');
-                    }
-                }, 1500);
-            } else {
-                setSuccess('Login successful! Redirecting...');
-                setTimeout(() => {
-                    navigate('/');
-                }, 1500);
-            }
-        } else {
-            setError(result.error);
-        }
-        
-        setLoading(false);
+        setSuc('Login successful! Redirecting...');
+        const role = (data.role || '').toLowerCase();
+        const redirectPath = role === 'hr' ? '/hr/assets' : role === 'employee' ? '/employee/dashboard' : '/';
+        console.log('Redirecting to:', redirectPath, '(role was:', role, ')');
+        setTimeout(() => nav(redirectPath), 1500);
+        setLoad(false);
     };
 
     return (
@@ -77,47 +73,17 @@ const Login = () => {
                     <h1 className="text-3xl font-bold">Welcome Back</h1>
                     <p className="text-sm text-base-content/70">Login to access your account</p>
                 </div>
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <label className="form-control w-full">
-                        <div className="label"><span className="label-text">Email</span></div>
-                        <input 
-                            name="email" 
-                            value={form.email} 
-                            onChange={handleChange}
-                            type="email" 
-                            placeholder="your@email.com" 
-                            className={`input input-bordered w-full ${getFieldError('email') ? 'input-error' : ''}`}
-                            required 
-                        />
-                        {getFieldError('email') && <p className="text-error text-xs mt-1">{getFieldError('email')}</p>}
-                    </label>
-                    <label className="form-control w-full">
-                        <div className="label"><span className="label-text">Password</span></div>
-                        <input 
-                            name="password" 
-                            value={form.password} 
-                            onChange={handleChange}
-                            type="password" 
-                            placeholder="Minimum 6 characters" 
-                            className={`input input-bordered w-full ${getFieldError('password') ? 'input-error' : ''}`}
-                            minLength={6}
-                            required 
-                        />
-                        {getFieldError('password') && <p className="text-error text-xs mt-1">{getFieldError('password')}</p>}
-                    </label>
-                    {error && <p className="text-error text-sm font-semibold">{error}</p>}
-                    {success && <p className="text-success text-sm font-semibold">{success}</p>}
-                    <button type="submit" className="btn mt-5 btn-neutral w-full" disabled={loading}>
-                        {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Login'}
+                <form onSubmit={handle} className="space-y-5">
+                    <Input name="email" type="email" placeholder="your@email.com" label="Email" value={form.email} onChange={handleInputChange} />
+                    <Input name="password" type="password" placeholder="Minimum 6 characters" label="Password" value={form.password} onChange={handleInputChange} />
+                    {err && <p className="text-error text-sm font-semibold">{err}</p>}
+                    {suc && <p className="text-success text-sm font-semibold">{suc}</p>}
+                    <button type="submit" className="btn mt-5 btn-neutral w-full" disabled={load}>
+                        {load ? <span className="loading loading-spinner loading-sm"></span> : 'Login'}
                     </button>
                 </form>
                 <div className="divider">New to AssetVerse?</div>
-                <div className="text-center space-y-3">
-                    <div className="flex flex-col gap-2">
-                        <Link to="/join/employee" className="btn btn-outline btn-sm">Join as Employee</Link>
-                        <Link to="/join/hr-manager" className="btn btn-outline btn-sm">Join as HR Manager</Link>
-                    </div>
-                </div>
+                <div className="text-center"><div className="flex flex-col gap-2"><Link to="/join/employee" className="btn btn-outline btn-sm">Join as Employee</Link><Link to="/join/hr-manager" className="btn btn-outline btn-sm">Join as HR Manager</Link></div></div>
             </div>
         </div>
     );

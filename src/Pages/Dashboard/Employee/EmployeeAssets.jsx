@@ -1,38 +1,41 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getAssets } from '../../../Services/api';
+import { api } from '../../../Services/api';
 import EmployeeDashboardLayout from './EmployeeDashboardLayout';
 
 const EmployeeAssets = () => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterType, setFilterType] = useState('');
+    const [search, setSearch] = useState('');
+    const [type, setType] = useState('');
 
-    const { data: assets = [], isLoading } = useQuery({
-        queryKey: ['assets'],
+    const { data: response = {}, isLoading, refetch } = useQuery({
+        queryKey: ['employee-assets', search, type],
         queryFn: async () => {
-            const result = await getAssets();
-            return result.success ? (Array.isArray(result.data) ? result.data : []) : [];
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (type) params.append('type', type);
+            const result = await api.get(`/api/employee-assets?${params}`);
+            return result.data;
         }
     });
 
-    const filteredAssets = assets.filter(asset => {
-        const matchesSearch = asset.name?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesType = !filterType || asset.type === filterType;
-        return matchesSearch && matchesType;
-    });
+    const assets = response.data || [];
 
-    const handleReturn = () => {
-        // TODO: Implement asset return functionality
-    };
-
-    const handlePrint = () => {
-        window.print();
+    const handleReturn = async (id) => {
+        try {
+            await api.post(`/api/employee-assets/${id}/return`, {
+                returnDate: new Date().toISOString(),
+                notes: ''
+            });
+            refetch();
+        } catch (err) {
+            console.error('Return failed:', err);
+        }
     };
 
     if (isLoading) {
         return (
-            <EmployeeDashboardLayout title="My Assets" subtitle="View assets assigned to you.">
-                <div className="flex items-center justify-center py-12">
+            <EmployeeDashboardLayout title="My Assets" subtitle="View your assigned assets">
+                <div className="flex justify-center py-12">
                     <span className="loading loading-spinner loading-lg"></span>
                 </div>
             </EmployeeDashboardLayout>
@@ -40,89 +43,89 @@ const EmployeeAssets = () => {
     }
 
     return (
-        <EmployeeDashboardLayout title="My Assets" subtitle="View assets assigned to you.">
-            <div className="space-y-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-                        <input
-                            type="text"
-                            placeholder="Search by asset name..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="input input-bordered flex-1"
-                        />
-                        <select
-                            value={filterType}
-                            onChange={(e) => setFilterType(e.target.value)}
-                            className="select select-bordered"
-                        >
-                            <option value="">All Types</option>
-                            <option value="returnable">Returnable</option>
-                            <option value="non-returnable">Non-returnable</option>
-                        </select>
-                    </div>
-                    <button onClick={handlePrint} className="btn btn-outline">
+        <EmployeeDashboardLayout title="My Assets" subtitle="View your assigned assets">
+            <div className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
+                    <input
+                        type="text"
+                        placeholder="Search assets..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="input input-bordered flex-1"
+                    />
+                    <select
+                        value={type}
+                        onChange={(e) => setType(e.target.value)}
+                        className="select select-bordered"
+                    >
+                        <option value="">All Types</option>
+                        <option value="returnable">Returnable</option>
+                        <option value="non-returnable">Non-Returnable</option>
+                    </select>
+                    <button onClick={() => window.print()} className="btn btn-outline">
                         Print
                     </button>
                 </div>
 
-                {filteredAssets.length === 0 ? (
-                    <div className="rounded-lg bg-base-200 p-8 text-center">
-                        <p className="text-base-content/60">No assets found</p>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto rounded-lg border border-base-300">
-                        <table className="w-full">
-                            <thead className="bg-base-200">
-                                <tr>
-                                    <th className="p-4 text-left">Image</th>
-                                    <th className="p-4 text-left">Asset Name</th>
-                                    <th className="p-4 text-left">Type</th>
-                                    <th className="p-4 text-left">Company</th>
-                                    <th className="p-4 text-left">Request Date</th>
-                                    <th className="p-4 text-left">Approval Date</th>
-                                    <th className="p-4 text-left">Status</th>
-                                    <th className="p-4 text-left">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredAssets.map((asset) => (
-                                    <tr key={asset._id} className="border-t border-base-300 hover:bg-base-100">
-                                        <td className="p-4">
+                <div className="overflow-x-auto rounded-lg border border-base-300">
+                    <table className="table">
+                        <thead>
+                            <tr className="bg-base-200">
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Company</th>
+                                <th>Request Date</th>
+                                <th>Approval Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {assets.length ? (
+                                assets.map(asset => (
+                                    <tr key={asset._id} className="hover">
+                                        <td>
                                             <img
-                                                src={asset.image}
-                                                alt={asset.name}
+                                                src={asset.assetImage}
+                                                alt={asset.assetName}
                                                 className="h-10 w-10 rounded object-cover"
                                             />
                                         </td>
-                                        <td className="p-4">{asset.name}</td>
-                                        <td className="p-4">
-                                            <span className={`badge ${asset.type === 'returnable' ? 'badge-info' : 'badge-warning'}`}>
-                                                {asset.type}
+                                        <td className="font-medium">{asset.assetName}</td>
+                                        <td className="capitalize">{asset.assetType}</td>
+                                        <td>{asset.companyName}</td>
+                                        <td>{new Date(asset.requestDate).toLocaleDateString()}</td>
+                                        <td>{new Date(asset.approvalDate).toLocaleDateString()}</td>
+                                        <td>
+                                            <span className={`badge ${
+                                                asset.status === 'Approved' ? 'badge-success' : 'badge-warning'
+                                            }`}>
+                                                {asset.status}
                                             </span>
                                         </td>
-                                        <td className="p-4">Company</td>
-                                        <td className="p-4">-</td>
-                                        <td className="p-4">-</td>
-                                        <td className="p-4">
-                                            <span className="badge badge-success">Assigned</span>
-                                        </td>
-                                        <td className="p-4">
-                                            {asset.type === 'returnable' && (
+                                        <td>
+                                            {asset.canReturn && (
                                                 <button
-                                                    onClick={() => handleReturn()}
-                                                    className="btn btn-sm btn-ghost"
+                                                    onClick={() => handleReturn(asset._id)}
+                                                    className="btn btn-sm btn-error"
                                                 >
                                                     Return
                                                 </button>
                                             )}
                                         </td>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="8" className="text-center py-8">
+                                        No assets found
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </EmployeeDashboardLayout>
     );

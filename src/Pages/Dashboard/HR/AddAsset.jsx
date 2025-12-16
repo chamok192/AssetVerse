@@ -129,8 +129,14 @@ const AddAsset = () => {
             return;
         }
 
-        // Upload image to ImgBB if a new file is selected
+        // Image is required
         let imageUrl = form.image.trim();
+        if (!imageFile && !imageUrl) {
+            setError("Asset image is required");
+            return;
+        }
+
+        // Upload image to ImgBB if a new file is selected
         if (imageFile) {
             const uploadResult = await uploadImageToImgBB(imageFile);
             if (!uploadResult.success) {
@@ -200,13 +206,14 @@ const AddAsset = () => {
 
                         <label className="form-control w-full">
                             <div className="label">
-                                <span className="label-text font-medium">Product Image</span>
+                                <span className="label-text font-medium">Product Image <span className="text-error">*</span></span>
                             </div>
                             <input
                                 type="file"
                                 accept="image/*"
                                 onChange={handleImageChange}
-                                className="file-input file-input-bordered w-full"
+                                required={!imagePreview}
+                                className="file-input file-input-bordered file-input-primary w-full"
                             />
                             {imagePreview && (
                                 <div className="mt-4">

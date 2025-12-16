@@ -5,27 +5,14 @@ import AuthContext from './AuthContext';
 
 const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [load, setLoad] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
+        const unsub = onAuthStateChanged(auth, (cur) => { setUser(cur); setLoad(false); });
+        return () => unsub();
     }, []);
 
-    const authInfo = {
-        user,
-        loading
-    };
-
-    return (
-        <AuthContext.Provider value={authInfo}>
-            {children}
-        </AuthContext.Provider>
-    );
+    return <AuthContext.Provider value={{ user, load }}>{children}</AuthContext.Provider>;
 };
 
 export default AuthProvider;

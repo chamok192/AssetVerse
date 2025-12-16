@@ -1,27 +1,28 @@
 import { motion } from 'framer-motion';
 import { FaCheck } from 'react-icons/fa';
-import { Link } from 'react-router';
+import { useNavigate } from 'react-router';
+import { useAuth } from '../../../Contents/AuthContext/useAuth';
 
 const MotionDiv = motion.div;
 
 const packages = [
     {
         name: "Basic",
-        employeeLimit: 5,
+        employeeLimit: 10,
         price: 5,
         features: ["Asset Tracking", "Employee Management", "Basic Support"],
         recommended: false
     },
     {
         name: "Standard",
-        employeeLimit: 10,
+        employeeLimit: 20,
         price: 8,
         features: ["All Basic features", "Advanced Analytics", "Priority Support"],
         recommended: true
     },
     {
         name: "Premium",
-        employeeLimit: 20,
+        employeeLimit: 30,
         price: 15,
         features: ["All Standard features", "Custom Branding", "24/7 Support"],
         recommended: false
@@ -29,6 +30,23 @@ const packages = [
 ];
 
 const Packages = () => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+
+    const handleGetStarted = () => {
+        if (user) {
+            const userData = JSON.parse(localStorage.getItem('userData')) || {};
+            const role = userData.role || user.role;
+            if (role?.toLowerCase() === 'hr') {
+                navigate('/hr/upgrade');
+            } else {
+                navigate('/join/hr-manager');
+            }
+        } else {
+            navigate('/join/hr-manager');
+        }
+    };
+
     return (
         <section id="pricing" className="py-16 px-6 lg:px-16 bg-white">
             <div className="max-w-7xl mx-auto">
@@ -90,16 +108,16 @@ const Packages = () => {
                                 ))}
                             </div>
 
-                            <Link
-                                to="/join/hr-manager"
-                                className={`btn w-full normal-case ${
+                            <button
+                                onClick={handleGetStarted}
+                                className={`btn w-full normal-case cursor-pointer ${
                                     pkg.recommended
                                         ? 'btn-primary'
                                         : 'btn-outline'
                                 }`}
                             >
                                 Get Started
-                            </Link>
+                            </button>
                         </MotionDiv>
                     ))}
                 </div>

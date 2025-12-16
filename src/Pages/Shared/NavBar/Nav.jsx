@@ -1,240 +1,95 @@
 import { useState, useEffect } from 'react';
 import Logo from '../../../Components/Logo/Logo';
-import { Link, NavLink } from 'react-router';
+import { Link, NavLink, useLocation } from 'react-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../../FireBase/firebase.init';
 import { logoutUser } from '../../../Auth/authService';
-import { useLocation } from 'react-router';
 
-const publicLinks = [
-    { label: 'Home', to: '/' },
-    { label: 'Pricing', to: '/#pricing', isHash: true },
-    { label: 'Join as Employee', to: '/join/employee' },
-    { label: 'Join as HR Manager', to: '/join/hr-manager' }
-];
-
-const employeeMenu = [
-    { label: 'My Assets', to: '/employee/assets' },
-    { label: 'My Team', to: '/employee/team' },
-    { label: 'Request Asset', to: '/employee/request' },
-    { label: 'Profile', to: '/profile' },
-    { label: 'Logout', action: 'logout' }
-];
-
-const hrManagerMenu = [
-    { label: 'Asset List', to: '/hr/assets' },
-    { label: 'Add Asset', to: '/hr/assets/new' },
-    { label: 'All Requests', to: '/hr/requests' },
-    { label: 'Upgrade Package', to: '/hr/upgrade' },
-    { label: 'Employee List', to: '/hr/employees' },
-    { label: 'Profile', to: '/profile' },
-    { label: 'Logout', action: 'logout' }
-];
+const DEF_IMG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"%3E%3Crect fill="%23e0e0e0" width="150" height="150"/%3E%3Ctext x="50%25" y="50%25" font-family="Arial" font-size="14" fill="%23999" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
+const publicLinks = [{ label: 'Home', to: '/' }, { label: 'Join as Employee', to: '/join/employee' }, { label: 'Join as HR Manager', to: '/join/hr-manager' }];
+const empMenu = [{ label: 'Dashboard', to: '/employee/dashboard' }, { label: 'My Assets', to: '/employee/assets' }, { label: 'My Team', to: '/employee/team' }, { label: 'Request Asset', to: '/employee/request' }, { label: 'Profile', to: '/profile' }, { label: 'Logout', action: 'logout' }];
+const hrMenu = [{ label: 'Dashboard', to: '/hr/assets' }, { label: 'Asset List', to: '/hr/assets' }, { label: 'Add Asset', to: '/hr/assets/new' }, { label: 'All Requests', to: '/hr/requests' }, { label: 'Upgrade Package', to: '/hr/upgrade' }, { label: 'Employee List', to: '/hr/employees' }, { label: 'Profile', to: '/profile' }, { label: 'Logout', action: 'logout' }];
 
 const Nav = () => {
     const [user, setUser] = useState(null);
-    const [activePricing, setActivePricing] = useState(false);
-    const [mobileOpen, setMobileOpen] = useState(false);
-    const [profileOpen, setProfileOpen] = useState(false);
+    const [pricing, setPricing] = useState(false);
+    const [mobile, setMobile] = useState(false);
+    const [profile, setProfile] = useState(false);
     const location = useLocation();
 
     useEffect(() => {
-        const updateUserState = (currentUser) => {
-            if (currentUser) {
-                currentUser.reload().then(() => {
-                    const userData = JSON.parse(localStorage.getItem('userData')) || {};
-                    const avatarUrl = currentUser.photoURL || userData.profileImage || userData.avatar || 'https://via.placeholder.com/150';
-
-                    setUser({
-                        uid: currentUser.uid,
-                        name: currentUser.displayName || userData.name || 'User',
-                        email: currentUser.email,
-                        avatar: avatarUrl,
-                        role: userData.role || 'employee'
-                    });
-                });
-            } else {
-                setUser(null);
-            }
+        const updateUser = (cur) => {
+            if (!cur) return setUser(null);
+            cur.reload().then(() => {
+                const data = JSON.parse(localStorage.getItem('userData')) || {};
+                const avatar = cur.photoURL || data.profileImage || data.avatar || DEF_IMG;
+                setUser({ uid: cur.uid, name: cur.displayName || data.name || 'User', email: cur.email, avatar, role: data.role || 'employee' });
+            }).catch(() => {
+                const data = JSON.parse(localStorage.getItem('userData')) || {};
+                setUser({ uid: cur.uid, name: cur.displayName || data.name || 'User', email: cur.email, avatar: cur.photoURL || data.profileImage || DEF_IMG, role: data.role || 'employee' });
+            });
         };
 
-        const unsubscribe = onAuthStateChanged(auth, updateUserState);
-
-        const handleStorageChange = () => {
-            const currentUser = auth.currentUser;
-            if (currentUser) {
-                updateUserState(currentUser);
-            }
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-
-        return () => {
-            unsubscribe();
-            window.removeEventListener('storage', handleStorageChange);
-        };
+        const unsub = onAuthStateChanged(auth, updateUser);
+        window.addEventListener('storage', () => updateUser(auth.currentUser));
+        return () => { unsub(); window.removeEventListener('storage', () => updateUser(auth.currentUser)); };
     }, []);
 
     useEffect(() => {
-        const handleScroll = () => {
-            const pricingSection = document.querySelector('#pricing');
-            if (pricingSection) {
-                const rect = pricingSection.getBoundingClientRect();
-                setActivePricing(rect.top < window.innerHeight && rect.bottom > 0);
-            }
+        const handle = () => {
+            const el = document.querySelector('#pricing');
+            if (el) setPricing(el.getBoundingClientRect().top < window.innerHeight && el.getBoundingClientRect().bottom > 0);
         };
-
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handle);
+        return () => window.removeEventListener('scroll', handle);
     }, []);
 
+    useEffect(() => { setMobile(false); setProfile(false); }, [location.pathname]);
 
-    useEffect(() => {
-        setMobileOpen(false);
-        setProfileOpen(false);
-    }, [location.pathname]);
+    const close = () => { setMobile(false); setProfile(false); };
+    const menu = user?.role?.toLowerCase() === 'hr' ? hrMenu : empMenu;
+    const linkClass = ({ isActive }) => isActive && !pricing ? 'active text-base-content font-semibold' : 'text-base-content/70';
+    const scroll = (h) => { const el = document.querySelector(h); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 
-    const roleMenu = user?.role === 'hr' ? hrManagerMenu : employeeMenu;
-
-    const closeMenus = () => {
-        setMobileOpen(false);
-        setProfileOpen(false);
-    };
-
-    const handleLogout = async () => {
-        await logoutUser();
-        setUser(null);
-        closeMenus();
-    };
-
-    const linkClass = ({ isActive }) => {
-        if (isActive && activePricing) {
-            return 'text-base-content/70';
-        }
-        return isActive ? 'active text-base-content font-semibold' : 'text-base-content/70';
-    };
-
-    const handleScrollToSection = (hash) => {
-        const element = document.querySelector(hash);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    };
-
-    const getHashLinkClass = (isHashActive) => isHashActive ? 'active text-base-content font-semibold' : 'text-base-content/70 hover:text-base-content';
-
-    const renderMenuItems = (items) => items.map((item) => (
+    const Item = ({ item }) => (
         <li key={item.label}>
-            {item.to ? (
-                item.isHash ? (
-                    <a
-                        href={item.to}
-                        onClick={(e) => {
-                            e.preventDefault();
-                            handleScrollToSection(item.to.substring(1));
-                            closeMenus();
-                        }}
-                        className="text-base-content/70 hover:text-base-content"
-                    >
-                        {item.label}
-                    </a>
-                ) : (
-                    <NavLink to={item.to} className={linkClass} onClick={closeMenus}>{item.label}</NavLink>
-                )
-            ) : (
-                <button type="button" onClick={handleLogout}>{item.label}</button>
-            )}
+            {item.to ? (item.isHash ? <a href={item.to} onClick={e => { e.preventDefault(); scroll(item.to.substring(1)); close(); }} className="text-base-content/70 hover:text-base-content">{item.label}</a> : <NavLink to={item.to} className={linkClass} onClick={close}>{item.label}</NavLink>) : <button type="button" onClick={async () => { await logoutUser(); setUser(null); close(); }}>{item.label}</button>}
         </li>
-    ));
+    );
 
     return (
         <div className="navbar bg-base-100 shadow-sm sticky top-0 z-50">
             <div className="navbar-start">
-                <div className={`dropdown ${mobileOpen ? 'dropdown-open' : ''}`}>
-                    <div
-                        tabIndex={0}
-                        role="button"
-                        className="btn btn-ghost lg:hidden"
-                        onClick={() => setMobileOpen((prev) => !prev)}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" />
-                        </svg>
+                <div className={`dropdown ${mobile ? 'dropdown-open' : ''}`}>
+                    <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden" onClick={() => setMobile(m => !m)}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" /></svg>
                     </div>
-                    <ul
-                        tabIndex={0}
-                        className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-56 p-2 shadow">
-                        {publicLinks.map((item) => (
-                            <li key={item.label}>
-                                {item.isHash ? (
-                                    <a
-                                        href={item.to}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            handleScrollToSection(item.to.substring(1));
-                                        }}
-                                        className={getHashLinkClass(activePricing)}
-                                    >
-                                        {item.label}
-                                    </a>
-                                ) : (
-                                    <NavLink to={item.to} className={linkClass} onClick={closeMenus}>{item.label}</NavLink>
-                                )}
-                            </li>
-                        ))}
-                        {user && (
-                            <>
-                                <li className="menu-title">{user.role === 'hr' ? 'HR Manager' : 'Employee'}</li>
-                                {renderMenuItems(roleMenu)}
-                            </>
-                        )}
+                    <ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-56 p-2 shadow">
+                        {publicLinks.map(i => <Item key={i.label} item={i} />)}
+                        {user && (<><li className="menu-title">{user.role === 'hr' ? 'HR Manager' : 'Employee'}</li>{menu.map(i => <Item key={i.label} item={i} />)}</>)}
                     </ul>
                 </div>
-                <Link to={'/'} className="cursor-pointer text-xl font-semibold tracking-tight">
-                    <Logo />
-                </Link>
+                <Link to={'/'} className="cursor-pointer text-xl font-semibold tracking-tight"><Logo /></Link>
             </div>
             <div className="navbar-center hidden lg:flex">
                 <ul className="menu menu-horizontal px-1 gap-2">
-                    {publicLinks.map((item) => (
-                        <li key={item.label}>
-                            {item.isHash ? (
-                                <a
-                                    href={item.to}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        handleScrollToSection(item.to.substring(1));
-                                    }}
-                                    className={getHashLinkClass(activePricing)}
-                                >
-                                    {item.label}
-                                </a>
-                            ) : (
-                                <NavLink to={item.to} className={linkClass}>{item.label}</NavLink>
-                            )}
+                    {publicLinks.map(i => (
+                        <li key={i.label}>
+                            {i.isHash ? <a href={i.to} onClick={e => { e.preventDefault(); scroll(i.to.substring(1)); }} className={pricing ? 'text-base-content/70' : 'text-base-content/70 hover:text-base-content'}>{i.label}</a> : <NavLink to={i.to} className={linkClass}>{i.label}</NavLink>}
                         </li>
                     ))}
                 </ul>
             </div>
             <div className="navbar-end gap-3">
-                {!user && (
-                    <Link to="/login" className="btn btn-neutral">Login</Link>
-                )}
+                {!user && <Link to="/login" className="btn btn-neutral">Login</Link>}
                 {user && (
-                    <div className={`dropdown dropdown-end ${profileOpen ? 'dropdown-open' : ''}`}>
-                        <div
-                            tabIndex={0}
-                            role="button"
-                            className="btn btn-ghost btn-circle avatar"
-                            onClick={() => setProfileOpen((prev) => !prev)}
-                        >
-                            <div className="w-10 rounded-full">
-                                <img alt={user.name} src={user.avatar} />
-                            </div>
+                    <div className={`dropdown dropdown-end ${profile ? 'dropdown-open' : ''}`}>
+                        <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar" onClick={() => setProfile(p => !p)}>
+                            <div className="w-10 rounded-full"><img alt={user.name} src={user.avatar} /></div>
                         </div>
                         <ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-56 p-2 shadow">
                             <li className="menu-title">{user.name}</li>
-                            {renderMenuItems(roleMenu)}
+                            {menu.map(i => <Item key={i.label} item={i} />)}
                         </ul>
                     </div>
                 )}

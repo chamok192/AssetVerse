@@ -8,20 +8,10 @@ import HowItWorks from '../Shared/HowItWorks/HowItWorks';
 import FAQ from '../Shared/FAQ/FAQ';
 import ContactCTA from '../Shared/ContactCTA/ContactCTA';
 
-const Home = () => {
-    return (
-        <div className="w-full">
-            <Banner/>
-            <FeatureCards/>
-            <Features />
-            <About/>
-            <Packages/>
-            <Testimonials/>
-            <HowItWorks/>
-            <FAQ/>
-            <ContactCTA/>
-        </div>
-    );
-};
+const Home = () => (
+    <div className="w-full">
+        <Banner/><FeatureCards/><Features/><About/><Packages/><Testimonials/><HowItWorks/><FAQ/><ContactCTA/>
+    </div>
+);
 
 export default Home;

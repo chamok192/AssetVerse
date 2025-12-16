@@ -6,77 +6,56 @@ import Employee from "../Auth/Employee";
 import HRManager from "../Auth/HRManager";
 import Login from "../Auth/Login";
 import ErrorPage from "../Pages/Error/ErrorPage";
-import HRAssetDashboard from "../Pages/Dashboard/HRAssetDashboard";
-import AddAsset from "../Pages/Dashboard/AddAsset";
-import AllRequests from "../Pages/Dashboard/AllRequests";
-import EmployeeList from "../Pages/Dashboard/EmployeeList";
-import UpgradePackage from "../Pages/Dashboard/UpgradePackage";
-import HRProfile from "../Pages/Dashboard/HRProfile";
+import HRAssetDashboard from "../Pages/Dashboard/HR/HRAssetDashboard";
+import AddAsset from "../Pages/Dashboard/HR/AddAsset";
+import AllRequests from "../Pages/Dashboard/HR/AllRequests";
+import EmployeeList from "../Pages/Dashboard/HR/EmployeeList";
+import UpgradePackage from "../Pages/Dashboard/HR/UpgradePackage";
+import HRProfile from "../Pages/Dashboard/HR/HRProfile";
+import EmployeeDashboard from "../Pages/Dashboard/Employee/EmployeeDashboard";
+import EmployeeAssets from "../Pages/Dashboard/Employee/EmployeeAssets";
+import RequestAsset from "../Pages/Dashboard/Employee/RequestAsset";
+import EmployeeTeam from "../Pages/Dashboard/Employee/EmployeeTeam";
+import EmployeeProfile from "../Pages/Dashboard/Employee/EmployeeProfile";
 import PrivateRoute from "./PrivateRoute";
-import RoleBasedRedirect from "./RoleBasedRedirect";
+
+const ProfileRouter = () => {
+    const role = JSON.parse(localStorage.getItem("userData") || "{}").role?.toLowerCase();
+    return role === "hr" ? <HRProfile /> : <EmployeeProfile />;
+};
+
+const Route = (path, role, Component) => ({
+    path,
+    element: <PrivateRoute requiredRole={role}>{Component}</PrivateRoute>
+});
 
 export const router = createBrowserRouter([
     {
         path: "/",
         Component: RootLayout,
-        children:[
-            {
-                index: true,
-                Component:Home
-            },
+        children: [
+            { index: true, Component: Home },
             {
                 Component: AuthLayout,
                 children: [
-                    {
-                        path: "login",
-                        Component: Login
-                    },
-                    {
-                        path: "join/employee",
-                        Component: Employee
-                    },
-                    {
-                        path: "join/hr-manager",
-                        Component: HRManager
-                    }
+                    { path: "login", Component: Login },
+                    { path: "join/employee", Component: Employee },
+                    { path: "join/hr-manager", Component: HRManager }
                 ]
             },
-            {
-                path: "hr/assets",
-                element: <PrivateRoute requiredRole="HR"><HRAssetDashboard /></PrivateRoute>
-            },
-            {
-                path: "hr/assets/new",
-                element: <PrivateRoute requiredRole="HR"><AddAsset /></PrivateRoute>
-            },
-            {
-                path: "hr/assets/:assetId/edit",
-                element: <PrivateRoute requiredRole="HR"><AddAsset /></PrivateRoute>
-            },
-            {
-                path: "hr/requests",
-                element: <PrivateRoute requiredRole="HR"><AllRequests /></PrivateRoute>
-            },
-            {
-                path: "hr/employees",
-                element: <PrivateRoute requiredRole="HR"><EmployeeList /></PrivateRoute>
-            },
-            {
-                path: "hr/upgrade",
-                element: <PrivateRoute requiredRole="HR"><UpgradePackage /></PrivateRoute>
-            },
-            {
-                path: "profile",
-                element: <PrivateRoute requiredRole="HR"><HRProfile /></PrivateRoute>
-            },
-            {
-                path: "*",
-                Component: ErrorPage
-            }
+            Route("hr/assets", "HR", <HRAssetDashboard />),
+            Route("hr/assets/new", "HR", <AddAsset />),
+            Route("hr/assets/:assetId/edit", "HR", <AddAsset />),
+            Route("hr/requests", "HR", <AllRequests />),
+            Route("hr/employees", "HR", <EmployeeList />),
+            Route("hr/upgrade", "HR", <UpgradePackage />),
+            Route("employee/dashboard", "Employee", <EmployeeDashboard />),
+            Route("employee/assets", "Employee", <EmployeeAssets />),
+            Route("employee/request", "Employee", <RequestAsset />),
+            Route("employee/team", "Employee", <EmployeeTeam />),
+            { path: "profile", element: <PrivateRoute><ProfileRouter /></PrivateRoute> },
+            { path: "*", Component: ErrorPage }
         ]
     },
-    {
-        path: "*",
-        Component: ErrorPage
-    }
+    { path: "*", Component: ErrorPage }
 ]);
