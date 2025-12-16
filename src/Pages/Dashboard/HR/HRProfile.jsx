@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { auth } from "../../../FireBase/firebase.init";
-import { updateUser, getUserByEmail } from "../../../Services/api";
+import { updateUserProfile, getUserByEmail } from "../../../Services/api";
+import { uploadImageToImgBB } from "../../../Auth/authService";
 import DashboardLayout from "./DashboardLayout";
 
 const HRProfile = () => {
@@ -11,6 +12,9 @@ const HRProfile = () => {
     const [error, setError] = useState("");
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [profileImagePreview, setProfileImagePreview] = useState("");
+    const [companyLogoPreview, setCompanyLogoPreview] = useState("");
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -46,7 +50,7 @@ const HRProfile = () => {
                         profileImage: result.data.profileImage || currentUser.photoURL || "",
                         packageLimit: result.data.packageLimit || userData.packageLimit || 0,
                         currentEmployees: result.data.currentEmployees || userData.currentEmployees || 0,
-                        subscription: result.data.subscription || userData.subscription || "basic",
+                        subscription: result.data.subscription || userData.subscription || null,
                         dateOfBirth: result.data.dateOfBirth || userData.dateOfBirth || ""
                     });
                 } else {
@@ -59,7 +63,7 @@ const HRProfile = () => {
                         profileImage: userData.profileImage || currentUser.photoURL || "",
                         packageLimit: userData.packageLimit || 0,
                         currentEmployees: userData.currentEmployees || 0,
-                        subscription: userData.subscription || "basic",
+                        subscription: userData.subscription || null,
                         dateOfBirth: userData.dateOfBirth || ""
                     });
                 }
@@ -78,17 +82,60 @@ const HRProfile = () => {
         setForm((prev) => ({ ...prev, [field]: value }));
     };
 
+    const handleProfileImageUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setUploading(true);
+            setError("");
+            
+            const preview = URL.createObjectURL(file);
+            setProfileImagePreview(preview);
+            
+            const uploadResult = await uploadImageToImgBB(file);
+            if (uploadResult.success) {
+                handleChange("profileImage", uploadResult.url);
+            } else {
+                setError(uploadResult.error || "Failed to upload profile image");
+            }
+        } catch {
+            setError("Error uploading profile image");
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleCompanyLogoUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setUploading(true);
+            setError("");
+            
+            const preview = URL.createObjectURL(file);
+            setCompanyLogoPreview(preview);
+            
+            const uploadResult = await uploadImageToImgBB(file);
+            if (uploadResult.success) {
+                handleChange("companyLogo", uploadResult.url);
+            } else {
+                setError(uploadResult.error || "Failed to upload company logo");
+            }
+        } catch {
+            setError("Error uploading company logo");
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleSave = async () => {
         try {
             setSaving(true);
             setError("");
-            const currentUser = auth.currentUser;
-            if (!currentUser) {
-                setError("User not authenticated");
-                return;
-            }
-
-            const result = await updateUser(currentUser.uid, form);
+            
+            const result = await updateUserProfile(form);
             if (result.success) {
                 setProfile(form);
                 setEditing(false);
@@ -130,7 +177,7 @@ const HRProfile = () => {
                             <h2 className="text-2xl font-bold">{form.name || "User"}</h2>
                             <p className="text-sm text-base-content/60">{form.email}</p>
                             <div className="mt-2">
-                                <span className="badge badge-primary capitalize">{form.subscription}</span>
+                                <span className="badge badge-primary capitalize">{form.subscription || "Free"}</span>
                             </div>
                         </div>
                     </div>
@@ -177,7 +224,7 @@ const HRProfile = () => {
                                             profileImage: profile.profileImage || "",
                                             packageLimit: profile.packageLimit || 0,
                                             currentEmployees: profile.currentEmployees || 0,
-                                            subscription: profile.subscription || "basic",
+                                            subscription: profile.subscription || null,
                                             dateOfBirth: profile.dateOfBirth || ""
                                         });
                                     }}
@@ -252,30 +299,72 @@ const HRProfile = () => {
 
                         <label className="form-control md:col-span-2">
                             <div className="label">
-                                <span className="label-text font-semibold">Profile Image URL</span>
+                                <span className="label-text font-semibold">Profile Image</span>
                             </div>
-                            <input
-                                type="url"
-                                className="input input-bordered"
-                                value={form.profileImage}
-                                onChange={(e) => handleChange("profileImage", e.target.value)}
-                                disabled={!editing}
-                                placeholder="https://i.ibb.co/..."
-                            />
+                            <div className="space-y-2">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleProfileImageUpload}
+                                    disabled={!editing || uploading}
+                                    className="file-input file-input-bordered file-input-primary w-full"
+                                />
+                                {(profileImagePreview || form.profileImage) && (
+                                    <div className="flex items-center gap-4">
+                                        <img 
+                                            src={profileImagePreview || form.profileImage} 
+                                            alt="Profile Preview" 
+                                            className="h-20 w-20 rounded-lg object-cover border border-base-300"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-ghost"
+                                            onClick={() => {
+                                                handleChange("profileImage", "");
+                                                setProfileImagePreview("");
+                                            }}
+                                            disabled={!editing}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </label>
 
                         <label className="form-control md:col-span-2">
                             <div className="label">
-                                <span className="label-text font-semibold">Company Logo URL</span>
+                                <span className="label-text font-semibold">Company Logo</span>
                             </div>
-                            <input
-                                type="url"
-                                className="input input-bordered"
-                                value={form.companyLogo}
-                                onChange={(e) => handleChange("companyLogo", e.target.value)}
-                                disabled={!editing}
-                                placeholder="https://i.ibb.co/..."
-                            />
+                            <div className="space-y-2">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleCompanyLogoUpload}
+                                    disabled={!editing || uploading}
+                                    className="file-input file-input-bordered file-input-primary w-full"
+                                />
+                                {(companyLogoPreview || form.companyLogo) && (
+                                    <div className="flex items-center gap-4">
+                                        <img 
+                                            src={companyLogoPreview || form.companyLogo} 
+                                            alt="Logo Preview" 
+                                            className="h-20 w-20 rounded-lg object-cover border border-base-300"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-ghost"
+                                            onClick={() => {
+                                                handleChange("companyLogo", "");
+                                                setCompanyLogoPreview("");
+                                            }}
+                                            disabled={!editing}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </label>
                     </div>
                 </div>
@@ -297,9 +386,9 @@ const HRProfile = () => {
                 <div className="rounded-2xl border-l-4 border-success bg-base-100 p-6 shadow">
                     <p className="text-sm text-base-content/70">Subscription</p>
                     <p className="mt-2 capitalize">
-                        <span className="badge badge-success">{form.subscription}</span>
+                        <span className="badge badge-success">{form.subscription || "Free"}</span>
                     </p>
-                    <p className="mt-1 text-xs text-base-content/60">active plan</p>
+                    <p className="mt-1 text-xs text-base-content/60">{form.subscription ? "active plan" : "upgrade to manage more"}</p>
                 </div>
             </div>
         </DashboardLayout>

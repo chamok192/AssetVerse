@@ -41,9 +41,10 @@ const PrivateRoute = ({ children, requiredRole }) => {
     
     if (requiredRole) {
         const required = requiredRole.toLowerCase();
+        const userRole = role ? String(role).toLowerCase() : null;
         
-        if (role !== required) {
-            const path = role === 'hr' ? '/hr/assets' : role === 'employee' ? '/employee/dashboard' : '/';
+        if (userRole !== required) {
+            const path = userRole === 'hr' ? '/hr/assets' : userRole === 'employee' ? '/employee/dashboard' : '/';
             return <Navigate to={path} replace />;
         }
     }

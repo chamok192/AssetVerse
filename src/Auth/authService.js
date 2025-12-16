@@ -55,7 +55,7 @@ const fetchUserData = async (email, token) => {
         const res = await axios.get(`${apiBase}/api/users/email/${email}`, config);
         const userData = res.data?.success ? res.data.data : (res.data?.data || res.data);
         return userData || null;
-    } catch (err) { 
+    } catch {
         return null; 
     }
 };
@@ -80,8 +80,16 @@ export const loginWithEmail = async (email, password) => {
 
         let role = backendUser.role || 'Employee';
         
-        if (role && typeof role === 'string') {
-            role = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+        // Normalize role to proper format: "HR" or "Employee"
+        if (typeof role === 'string') {
+            const roleLower = role.toLowerCase();
+            if (roleLower === 'hr') {
+                role = 'HR';
+            } else if (roleLower === 'employee') {
+                role = 'Employee';
+            } else {
+                role = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+            }
         }
         
         const userData = {
@@ -115,11 +123,15 @@ export const registerEmployee = async (data) => {
             role: 'Employee'
         };
         
-        await axios.post(`${apiBase}/api/users`, userData).catch(() => {});
+        const res = await axios.post(`${apiBase}/api/users`, userData);
+        if (!res.data?.success) {
+            throw new Error('Failed to save user to database');
+        }
+        
         saveUser(userData);
         return { success: true, user: fbUser, userData };
     } catch (e) {
-        return { success: false, error: getError(e.code) };
+        return { success: false, error: getError(e.code) || e.message || 'Registration failed' };
     }
 };
 
@@ -142,11 +154,15 @@ export const registerHRManager = async (data) => {
             dateOfBirth: data.dateOfBirth || ''
         };
         
-        await axios.post(`${apiBase}/api/users`, userData).catch(() => {});
+        const res = await axios.post(`${apiBase}/api/users`, userData);
+        if (!res.data?.success) {
+            throw new Error('Failed to save user to database');
+        }
+        
         saveUser(userData);
         return { success: true, user: fbUser, userData };
     } catch (e) {
-        return { success: false, error: getError(e.code) };
+        return { success: false, error: getError(e.code) || e.message || 'Registration failed' };
     }
 };
 

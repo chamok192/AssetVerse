@@ -28,7 +28,7 @@ const EmployeeAssets = () => {
             });
             refetch();
         } catch (err) {
-            console.error('Return failed:', err);
+            // Error handled silently
         }
     };
 

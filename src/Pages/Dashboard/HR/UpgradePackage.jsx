@@ -51,7 +51,7 @@ const UpgradePackage = () => {
                             </div>
                             <div className="divider my-2"></div>
                             <p className="text-sm font-semibold text-base-content/70 mb-3">Employee limit: <span className="badge badge-outline">{pkg.employeeLimit}</span></p>
-                            <ul className="space-y-2 text-sm mb-6 flex-grow">
+                            <ul className="space-y-2 text-sm mb-6 grow">
                                 {pkg.features.map((f) => (
                                     <li key={f} className="flex items-start">
                                         <span className="text-success mr-2 font-bold">✓</span>

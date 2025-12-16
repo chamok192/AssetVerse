@@ -49,11 +49,7 @@ const Login = () => {
         }
 
         const data = res.userData;
-        console.log('===== LOGIN COMPLETE =====');
-        console.log('Email:', data.email);
-        console.log('Role:', data.role);
-        console.log('Full userData:', JSON.stringify(data, null, 2));
-        console.log('=========================');
+
         
         localStorage.setItem('userData', JSON.stringify(data));
         window.dispatchEvent(new Event('storage'));
@@ -61,7 +57,7 @@ const Login = () => {
         setSuc('Login successful! Redirecting...');
         const role = (data.role || '').toLowerCase();
         const redirectPath = role === 'hr' ? '/hr/assets' : role === 'employee' ? '/employee/dashboard' : '/';
-        console.log('Redirecting to:', redirectPath, '(role was:', role, ')');
+
         setTimeout(() => nav(redirectPath), 1500);
         setLoad(false);
     };

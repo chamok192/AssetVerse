@@ -28,13 +28,22 @@ const handler = async (fn, fallback) => {
     }
 };
 
+const getUserData = () => {
+    try {
+        return JSON.parse(localStorage.getItem('userData') || sessionStorage.getItem('userData') || '{}');
+    } catch {
+        return {};
+    }
+};
+
 export const getUsers = () => handler(() => api.get('/api/users'), 'Failed to fetch users');
 export const createUser = (data) => handler(() => api.post('/api/users', data), 'Failed to create user');
 export const getUserByEmail = (email) => handler(() => api.get(`/api/users/email/${email}`), 'User not found');
 export const updateUser = (id, data) => handler(() => api.put(`/api/users/${id}`, data), 'Failed to update user');
+export const updateUserProfile = (data) => handler(() => api.patch('/api/users/profile', data), 'Failed to update profile');
 export const getAssets = () => handler(() => api.get('/api/assets'), 'Failed to fetch assets');
 export const createAsset = (data) => {
-    const user = localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData')) : null;
+    const user = getUserData();
     return handler(() => api.post('/api/assets', { ...data, hrEmail: user?.email || '' }), 'Failed to create asset');
 };
 export const getAssetById = (id) => handler(() => api.get(`/api/assets/${id}`), 'Failed to fetch asset');
@@ -43,6 +52,7 @@ export const updateAsset = (id, data) => {
     return handler(() => api.patch(`/api/assets/${id}`, { name: data.name, image: data.image, type: data.type, quantity: data.quantity }), 'Failed to update asset');
 };
 export const deleteAsset = (id) => handler(() => api.delete(`/api/assets/${id}`), 'Failed to delete asset');
+export const getEmployeeLimitCheck = () => handler(() => api.get('/api/users/limit-check'), 'Failed to check employee limit');
 export const getRequests = () => handler(() => api.get('/api/requests'), 'Failed to fetch requests');
 export const approveRequest = (id) => handler(() => api.put(`/api/requests/${id}/approve`), 'Failed to approve');
 export const rejectRequest = (id) => handler(() => api.put(`/api/requests/${id}/reject`), 'Failed to reject');
