@@ -82,9 +82,7 @@ const PaymentModal = ({ isOpen, onClose, package: pkg, userEmail, onSuccess }) =
           </div>
         )}
       </div>
-      <form method="dialog" className="modal-backdrop">
-        <button onClick={onClose}>close</button>
-      </form>
+      <div className="modal-backdrop" onClick={onClose}></div>
     </div>
   );
 };

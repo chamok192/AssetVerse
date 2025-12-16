@@ -6,6 +6,7 @@ import Employee from "../Auth/Employee";
 import HRManager from "../Auth/HRManager";
 import Login from "../Auth/Login";
 import ErrorPage from "../Pages/Error/ErrorPage";
+import ErrorBoundary from "../Components/ErrorBoundary";
 import HRAssetDashboard from "../Pages/Dashboard/HR/HRAssetDashboard";
 import AddAsset from "../Pages/Dashboard/HR/AddAsset";
 import AllRequests from "../Pages/Dashboard/HR/AllRequests";
@@ -32,15 +33,17 @@ const Route = (path, role, Component) => ({
 export const router = createBrowserRouter([
     {
         path: "/",
-        Component: RootLayout,
+        element: <ErrorBoundary><RootLayout /></ErrorBoundary>,
+        errorElement: <ErrorPage />,
         children: [
-            { index: true, Component: Home },
+            { index: true, Component: Home, errorElement: <ErrorPage /> },
             {
                 Component: AuthLayout,
+                errorElement: <ErrorPage />,
                 children: [
-                    { path: "login", Component: Login },
-                    { path: "join/employee", Component: Employee },
-                    { path: "join/hr-manager", Component: HRManager }
+                    { path: "login", Component: Login, errorElement: <ErrorPage /> },
+                    { path: "join/employee", Component: Employee, errorElement: <ErrorPage /> },
+                    { path: "join/hr-manager", Component: HRManager, errorElement: <ErrorPage /> }
                 ]
             },
             Route("hr/assets", "HR", <HRAssetDashboard />),
@@ -53,9 +56,9 @@ export const router = createBrowserRouter([
             Route("employee/assets", "Employee", <EmployeeAssets />),
             Route("employee/request", "Employee", <RequestAsset />),
             Route("employee/team", "Employee", <EmployeeTeam />),
-            { path: "profile", element: <PrivateRoute><ProfileRouter /></PrivateRoute> },
-            { path: "*", Component: ErrorPage }
+            { path: "profile", element: <PrivateRoute><ProfileRouter /></PrivateRoute>, errorElement: <ErrorPage /> },
+            { path: "*", Component: ErrorPage, errorElement: <ErrorPage /> }
         ]
     },
-    { path: "*", Component: ErrorPage }
+    { path: "*", Component: ErrorPage, errorElement: <ErrorPage /> }
 ]);
