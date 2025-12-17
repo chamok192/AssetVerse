@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { approveRequest, getRequests, rejectRequest } from "../../../Services/api";
+import { updateRequest, getRequests } from "../../../Services/api";
 import DashboardLayout from "./DashboardLayout";
 
 const statusColors = {
@@ -19,12 +19,13 @@ const AllRequests = () => {
         queryFn: async () => {
             const result = await getRequests();
             return result.success ? (Array.isArray(result.data) ? result.data : []) : [];
-        }
+        },
+        onError: (err) => console.error('Failed to fetch requests:', err)
     });
 
     // Mutation for approving requests
     const approveMutation = useMutation({
-        mutationFn: approveRequest,
+        mutationFn: (id) => updateRequest(id, { status: 'accepted' }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['requests'] });
             setProcessingId(null);
@@ -33,7 +34,7 @@ const AllRequests = () => {
 
     // Mutation for rejecting requests
     const rejectMutation = useMutation({
-        mutationFn: rejectRequest,
+        mutationFn: (id) => updateRequest(id, { status: 'rejected' }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['requests'] });
             setProcessingId(null);
@@ -71,6 +72,7 @@ const AllRequests = () => {
                         <tr>
                             <th>Employee</th>
                             <th>Asset</th>
+                            <th>Note</th>
                             <th>Date</th>
                             <th>Status</th>
                             <th className="text-right">Actions</th>
@@ -79,7 +81,7 @@ const AllRequests = () => {
                     <tbody>
                         {isLoading && (
                             <tr>
-                                <td colSpan={5} className="py-6 text-center">
+                                <td colSpan={6} className="py-6 text-center">
                                     <span className="loading loading-spinner"></span>
                                 </td>
                             </tr>
@@ -87,7 +89,7 @@ const AllRequests = () => {
 
                         {!isLoading && requests.length === 0 && (
                             <tr>
-                                <td colSpan={5} className="py-6 text-center text-base-content/70">
+                                <td colSpan={6} className="py-6 text-center text-base-content/70">
                                     No requests found.
                                 </td>
                             </tr>
@@ -107,6 +109,7 @@ const AllRequests = () => {
                                         <p className="text-sm text-base-content/60">Qty: {req.quantity ?? 1}</p>
                                     </div>
                                 </td>
+                                <td>{req.note || "-"}</td>
                                 <td>{req.createdAt ? new Date(req.createdAt).toLocaleDateString() : "-"}</td>
                                 <td>
                                     <span className={`badge capitalize ${statusColors[req.status] || "badge-ghost"}`}>

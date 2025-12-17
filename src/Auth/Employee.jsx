@@ -4,6 +4,40 @@ import { registerEmployee, getFieldError, uploadImageToImgBB } from './authServi
 
 const init = { name: '', email: '', password: '', dateOfBirth: '', profileImage: '', role: 'Employee' };
 
+const Input = ({ name, type = 'text', placeholder, label, value, onChange, onBlur, error }) => {
+    const [showPassword, setShowPassword] = useState(false);
+    const isPassword = type === 'password';
+    const inputType = isPassword && showPassword ? 'text' : type;
+
+    return (
+        <label className="form-control w-full">
+            <div className="label"><span className="label-text font-semibold">{label}</span></div>
+            <div className="relative">
+                <input key={name} name={name} value={value} onChange={onChange} onBlur={onBlur} type={inputType} placeholder={placeholder} className={`input input-bordered w-full pr-10 ${error ? 'input-error' : ''}`} minLength={name === 'password' ? 6 : undefined} required autoComplete={name === 'password' ? 'new-password' : name === 'email' ? 'email' : name === 'name' ? 'name' : name === 'dateOfBirth' ? 'bday' : 'off'} />
+                {isPassword && (
+                    <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowPassword(!showPassword)}
+                    >
+                        {showPassword ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                            </svg>
+                        ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        )}
+                    </button>
+                )}
+            </div>
+            {error && <p className="text-error text-xs mt-1">{error}</p>}
+        </label>
+    );
+};
+
 const Employee = () => {
     const nav = useNavigate();
     const [form, setForm] = useState(init);
@@ -43,14 +77,6 @@ const Employee = () => {
         setLoad(false);
     };
 
-    const Input = ({ name, type = 'text', placeholder, label }) => (
-        <label className="form-control w-full">
-            <div className="label"><span className="label-text font-semibold">{label}</span></div>
-            <input name={name} value={form[name]} onChange={change} onBlur={blur} type={type} placeholder={placeholder} className={`input input-bordered w-full ${getErr(name) ? 'input-error' : ''}`} minLength={name === 'password' ? 6 : undefined} required />
-            {getErr(name) && <p className="text-error text-xs mt-1">{getErr(name)}</p>}
-        </label>
-    );
-
     return (
         <div className="min-h-screen bg-base-200 flex items-center justify-center px-4 py-12 overflow-x-hidden">
             <div className="w-full max-w-6xl grid md:grid-cols-2 gap-6 md:gap-8 lg:gap-10">
@@ -61,10 +87,10 @@ const Employee = () => {
                         <p className="text-sm text-base-content/70">Use your personal email. Company affiliation will be handled after registration.</p>
                     </div>
                     <form onSubmit={submit} className="space-y-6">
-                        <Input name="name" placeholder="Your full name" label="Full Name" />
-                        <Input name="email" type="email" placeholder="personal@email.com" label="Personal Email" />
-                        <Input name="password" type="password" placeholder="Minimum 6 characters" label="Password" />
-                        <Input name="dateOfBirth" type="date" label="Date of Birth" />
+                        <Input name="name" value={form.name} onChange={change} onBlur={blur} error={getErr('name')} placeholder="Your full name" label="Full Name" />
+                        <Input name="email" value={form.email} onChange={change} onBlur={blur} error={getErr('email')} type="email" placeholder="personal@email.com" label="Personal Email" />
+                        <Input name="password" value={form.password} onChange={change} onBlur={blur} error={getErr('password')} type="password" placeholder="Minimum 6 characters" label="Password" />
+                        <Input name="dateOfBirth" value={form.dateOfBirth} onChange={change} onBlur={blur} error={getErr('dateOfBirth')} type="date" label="Date of Birth" />
                         <label className="form-control w-full">
                             <div className="label"><span className="label-text font-semibold">Upload profile image</span></div>
                             <input name="profileImageFile" onChange={upFile} type="file" accept="image/*" className="file-input file-input-bordered file-input-primary w-full" />

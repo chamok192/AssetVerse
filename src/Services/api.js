@@ -37,6 +37,8 @@ const getUserData = () => {
     }
 };
 
+export { getUserData };
+
 export const getUsers = () => handler(() => api.get('/api/users'), 'Failed to fetch users');
 export const createUser = (data) => handler(() => api.post('/api/users', data), 'Failed to create user');
 export const getUserByEmail = (email) => handler(() => api.get(`/api/users/email/${email}`), 'User not found');
@@ -63,7 +65,9 @@ export const getPaymentHistory = () => handler(() => api.get('/api/payments/hist
 export const createPaymentIntent = (data) => handler(() => api.post('/api/payments/create-checkout', data), 'Failed to create checkout session');
 export const confirmPayment = (data) => handler(() => api.post('/api/payments/confirm', data), 'Failed to confirm payment');
 export const verifyPaymentSession = (sessionId) => handler(() => api.get(`/api/payments/session/${sessionId}`), 'Failed to verify session');
+export const getEmployeeAssets = () => handler(() => api.get('/api/employee-assets'), 'Failed to fetch employee assets');
 export const createRequest = (data) => handler(() => api.post('/api/requests', data), 'Failed to create request');
+export const updateRequest = (id, data) => handler(() => api.patch(`/api/requests/${id}`, data), 'Failed to update request');
 export const getPackages = () => handler(() => api.get('/api/packages'), 'Failed to fetch packages');
 export const clearToken = () => {
     localStorage.removeItem('token');

@@ -185,8 +185,8 @@ const HRProfile = () => {
                     {form.companyLogo && (
                         <div className="mt-6 flex justify-center">
                             <div className="avatar">
-                                <div className="w-20 rounded-lg border-2 border-base-300 bg-base-200">
-                                    <img src={form.companyLogo} alt={form.companyName || "Company"} />
+                                <div className="w-32 rounded-lg border-2 border-base-300 bg-base-200">
+                                    <img src={form.companyLogo} alt={form.companyName || "Company"} className="w-full h-full object-cover" onError={() => setForm(p => ({ ...p, companyLogo: '' }))} />
                                 </div>
                             </div>
                         </div>

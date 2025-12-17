@@ -62,16 +62,15 @@ const fetchUserData = async (email, token) => {
 
 export const loginWithEmail = async (email, password) => {
     try {
-        const backendUser = await fetchUserData(email, null);
-        
-        if (!backendUser) {
-            return { success: false, error: 'User account not found. Please register first.' };
-        }
-        
         const { user: fbUser } = await signInWithEmailAndPassword(auth, email, password);
         
         const tokenRes = await axios.post(`${apiBase}/api/auth/login`, { email, uid: fbUser.uid }).catch(() => ({}));
         const token = tokenRes.data?.token;
+        const backendUser = tokenRes.data?.user;
+        
+        if (!backendUser) {
+            return { success: false, error: 'User account not found. Please register first.' };
+        }
         
         if (token) {
             localStorage.setItem('token', token);
@@ -109,7 +108,7 @@ export const loginWithEmail = async (email, password) => {
     }
 };
 
-export const registerEmployee = async (data) => {
+const registerUser = async (data, role, extraFields = {}) => {
     try {
         const { user: fbUser } = await createUserWithEmailAndPassword(auth, data.email, data.password);
         await updateProfile(fbUser, { displayName: data.name, photoURL: data.profileImage || '' });
@@ -120,7 +119,8 @@ export const registerEmployee = async (data) => {
             email: data.email,
             profileImage: data.profileImage || '',
             dateOfBirth: data.dateOfBirth || '',
-            role: 'Employee'
+            role: role,
+            ...extraFields
         };
         
         const res = await axios.post(`${apiBase}/api/users`, userData);
@@ -135,35 +135,19 @@ export const registerEmployee = async (data) => {
     }
 };
 
+export const registerEmployee = async (data) => {
+    return registerUser(data, 'Employee');
+};
+
 export const registerHRManager = async (data) => {
-    try {
-        const { user: fbUser } = await createUserWithEmailAndPassword(auth, data.email, data.password);
-        await updateProfile(fbUser, { displayName: data.name, photoURL: data.profileImage || '' });
-        
-        const userData = {
-            uid: fbUser.uid,
-            name: data.name,
-            email: data.email,
-            profileImage: data.profileImage || '',
-            role: 'HR',
-            companyName: data.companyName || '',
-            companyLogo: data.companyLogo || '',
-            packageLimit: parseInt(data.packageLimit) || 5,
-            currentEmployees: 0,
-            subscription: data.subscription || 'basic',
-            dateOfBirth: data.dateOfBirth || ''
-        };
-        
-        const res = await axios.post(`${apiBase}/api/users`, userData);
-        if (!res.data?.success) {
-            throw new Error('Failed to save user to database');
-        }
-        
-        saveUser(userData);
-        return { success: true, user: fbUser, userData };
-    } catch (e) {
-        return { success: false, error: getError(e.code) || e.message || 'Registration failed' };
-    }
+    const extraFields = {
+        companyName: data.companyName || '',
+        companyLogo: data.companyLogo || '',
+        packageLimit: parseInt(data.packageLimit) || 5,
+        currentEmployees: 0,
+        subscription: data.subscription || 'basic'
+    };
+    return registerUser(data, 'HR', extraFields);
 };
 
 export const logoutUser = async () => {

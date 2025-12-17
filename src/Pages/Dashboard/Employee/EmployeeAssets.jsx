@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../../../Services/api';
+import { getEmployeeAssets } from '../../../Services/api';
 import EmployeeDashboardLayout from './EmployeeDashboardLayout';
 
 const EmployeeAssets = () => {
@@ -10,11 +10,8 @@ const EmployeeAssets = () => {
     const { data: response = {}, isLoading, refetch } = useQuery({
         queryKey: ['employee-assets', search, type],
         queryFn: async () => {
-            const params = new URLSearchParams();
-            if (search) params.append('search', search);
-            if (type) params.append('type', type);
-            const result = await api.get(`/api/employee-assets?${params}`);
-            return result.data;
+            const result = await getEmployeeAssets();
+            return result;
         }
     });
 

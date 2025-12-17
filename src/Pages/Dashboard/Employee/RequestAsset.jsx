@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAssets, createRequest } from '../../../Services/api';
+import { getAssets, createRequest, getUserData } from '../../../Services/api';
 import EmployeeDashboardLayout from './EmployeeDashboardLayout';
 
 const RequestAsset = () => {
@@ -20,10 +20,14 @@ const RequestAsset = () => {
     const requestMutation = useMutation({
         mutationFn: (payload) => createRequest(payload),
         onSuccess: () => {
+            alert('Request submitted successfully!');
             queryClient.invalidateQueries({ queryKey: ['requests'] });
             setShowModal(false);
             setNote('');
             setSelectedAsset(null);
+        },
+        onError: (err) => {
+            alert('Failed to submit request: ' + (err?.error || 'Unknown error'));
         }
     });
 
@@ -36,11 +40,17 @@ const RequestAsset = () => {
 
     const handleSubmitRequest = () => {
         if (!selectedAsset) return;
+        const user = getUserData();
+        if (!user?.email) {
+            alert('User email not found. Please login again.');
+            return;
+        }
         
         requestMutation.mutate({
             assetId: selectedAsset._id,
             note: note,
-            status: 'pending'
+            status: 'pending',
+            employeeEmail: user.email
         });
     };
 
