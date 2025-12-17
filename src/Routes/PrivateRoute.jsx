@@ -14,13 +14,10 @@ const PrivateRoute = ({ children, requiredRole }) => {
                 const userData = JSON.parse(localStorage.getItem('userData') || '{}');
                 const userRole = userData.role ? String(userData.role).trim().toLowerCase() : null;
                 return userRole;
-            } catch (err) {
+            } catch {
                 return null;
             }
         };
-
-        const initialRole = getRoleFromStorage();
-        if (initialRole) setRole(initialRole);
 
         const unsub = onAuthStateChanged(auth, (user) => {
             if (user) {

@@ -1,3 +1,4 @@
+export const deletePayment = (id) => handler(() => api.delete(`/api/payments/${id}`), 'Failed to delete payment');
 import axios from 'axios';
 
 const api = axios.create({
@@ -59,9 +60,11 @@ export const rejectRequest = (id) => handler(() => api.put(`/api/requests/${id}/
 export const getEmployees = () => handler(() => api.get('/api/employees'), 'Failed to fetch employees');
 export const removeEmployee = (id) => handler(() => api.delete(`/api/employees/${id}`), 'Failed to remove employee');
 export const getPaymentHistory = () => handler(() => api.get('/api/payments/history'), 'Failed to fetch history');
-export const createPaymentIntent = (data) => handler(() => api.post('/api/payments/create-intent', data), 'Failed to create payment intent');
+export const createPaymentIntent = (data) => handler(() => api.post('/api/payments/create-checkout', data), 'Failed to create checkout session');
 export const confirmPayment = (data) => handler(() => api.post('/api/payments/confirm', data), 'Failed to confirm payment');
+export const verifyPaymentSession = (sessionId) => handler(() => api.get(`/api/payments/session/${sessionId}`), 'Failed to verify session');
 export const createRequest = (data) => handler(() => api.post('/api/requests', data), 'Failed to create request');
+export const getPackages = () => handler(() => api.get('/api/packages'), 'Failed to fetch packages');
 export const clearToken = () => {
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');

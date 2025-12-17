@@ -19,7 +19,7 @@ const RoleBasedRedirect = () => {
                 } else {
                     navigate('/', { replace: true });
                 }
-            } catch (error) {
+            } catch {
                 navigate('/', { replace: true });
             }
         } else {

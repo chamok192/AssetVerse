@@ -12,23 +12,14 @@ import AddAsset from "../Pages/Dashboard/HR/AddAsset";
 import AllRequests from "../Pages/Dashboard/HR/AllRequests";
 import EmployeeList from "../Pages/Dashboard/HR/EmployeeList";
 import UpgradePackage from "../Pages/Dashboard/HR/UpgradePackage";
-import HRProfile from "../Pages/Dashboard/HR/HRProfile";
+import Payments from "../Pages/Dashboard/HR/Payments";
 import EmployeeDashboard from "../Pages/Dashboard/Employee/EmployeeDashboard";
 import EmployeeAssets from "../Pages/Dashboard/Employee/EmployeeAssets";
 import RequestAsset from "../Pages/Dashboard/Employee/RequestAsset";
 import EmployeeTeam from "../Pages/Dashboard/Employee/EmployeeTeam";
-import EmployeeProfile from "../Pages/Dashboard/Employee/EmployeeProfile";
+import PaymentSuccess from "../Pages/PaymentSuccess";
 import PrivateRoute from "./PrivateRoute";
-
-const ProfileRouter = () => {
-    const role = JSON.parse(localStorage.getItem("userData") || "{}").role?.toLowerCase();
-    return role === "hr" ? <HRProfile /> : <EmployeeProfile />;
-};
-
-const Route = (path, role, Component) => ({
-    path,
-    element: <PrivateRoute requiredRole={role}>{Component}</PrivateRoute>
-});
+import ProfileRouter from "./ProfileRouter";
 
 export const router = createBrowserRouter([
     {
@@ -46,17 +37,111 @@ export const router = createBrowserRouter([
                     { path: "join/hr-manager", Component: HRManager, errorElement: <ErrorPage /> }
                 ]
             },
-            Route("hr/assets", "HR", <HRAssetDashboard />),
-            Route("hr/assets/new", "HR", <AddAsset />),
-            Route("hr/assets/:assetId/edit", "HR", <AddAsset />),
-            Route("hr/requests", "HR", <AllRequests />),
-            Route("hr/employees", "HR", <EmployeeList />),
-            Route("hr/upgrade", "HR", <UpgradePackage />),
-            Route("employee/dashboard", "Employee", <EmployeeDashboard />),
-            Route("employee/assets", "Employee", <EmployeeAssets />),
-            Route("employee/request", "Employee", <RequestAsset />),
-            Route("employee/team", "Employee", <EmployeeTeam />),
-            { path: "profile", element: <PrivateRoute><ProfileRouter /></PrivateRoute>, errorElement: <ErrorPage /> },
+            {
+                path: "hr/assets",
+                element: (
+                    <PrivateRoute>
+                        <HRAssetDashboard />
+                    </PrivateRoute>
+                ),
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "hr/assets/new",
+                element: (
+                    <PrivateRoute>
+                        <AddAsset />
+                    </PrivateRoute>
+                ),
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "hr/assets/:assetId/edit",
+                element: (
+                    <PrivateRoute>
+                        <AddAsset />
+                    </PrivateRoute>
+                ),
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "hr/requests",
+                element: (
+                    <PrivateRoute>
+                        <AllRequests />
+                    </PrivateRoute>
+                ),
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "hr/employees",
+                element: (
+                    <PrivateRoute>
+                        <EmployeeList />
+                    </PrivateRoute>
+                ),
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "hr/upgrade",
+                element: (
+                    <PrivateRoute>
+                        <UpgradePackage />
+                    </PrivateRoute>
+                ),
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "hr/payments",
+                element: <Payments />,
+                errorElement: <ErrorPage />
+            },
+            { path: "payment-success", element: <PaymentSuccess />, errorElement: <ErrorPage /> },
+            {
+                path: "employee/dashboard",
+                element: (
+                    <PrivateRoute>
+                        <EmployeeDashboard />
+                    </PrivateRoute>
+                ),
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "employee/assets",
+                element: (
+                    <PrivateRoute>
+                        <EmployeeAssets />
+                    </PrivateRoute>
+                ),
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "employee/request",
+                element: (
+                    <PrivateRoute>
+                        <RequestAsset />
+                    </PrivateRoute>
+                ),
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "employee/team",
+                element: (
+                    <PrivateRoute>
+                        <EmployeeTeam />
+                    </PrivateRoute>
+                ),
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "profile",
+                element: (
+                    <PrivateRoute>
+                        <ProfileRouter />
+                    </PrivateRoute>
+                ),
+                errorElement: <ErrorPage />
+            },
             { path: "*", Component: ErrorPage, errorElement: <ErrorPage /> }
         ]
     },

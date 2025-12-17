@@ -33,6 +33,13 @@ const Packages = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
 
+    // Get current user's active package (subscription)
+    let activePackage = null;
+    if (user) {
+        const userData = JSON.parse(localStorage.getItem('userData')) || {};
+        activePackage = userData.subscription || null;
+    }
+
     const handleGetStarted = () => {
         if (user) {
             const userData = JSON.parse(localStorage.getItem('userData')) || {};
@@ -66,60 +73,76 @@ const Packages = () => {
                 </MotionDiv>
 
                 <div className="grid gap-8 md:grid-cols-3 lg:gap-6">
-                    {packages.map((pkg, idx) => (
-                        <MotionDiv
-                            key={pkg.name}
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, amount: 0.3 }}
-                            transition={{ duration: 0.5, delay: idx * 0.1 }}
-                            whileHover={{ y: -8 }}
-                            className={`relative rounded-2xl p-8 border-2 transition-all duration-300 ${
-                                pkg.recommended
-                                    ? 'border-blue-500 bg-blue-50 shadow-xl'
-                                    : 'border-slate-200 bg-white shadow-lg hover:shadow-xl'
-                            }`}
-                        >
-                            {pkg.recommended && (
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                                    <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                                        Most Popular
-                                    </span>
-                                </div>
-                            )}
-
-                            <div className="text-center mb-6">
-                                <h3 className="text-2xl font-bold text-slate-900 mb-2">{pkg.name}</h3>
-                                <div className="flex items-baseline justify-center gap-1 mb-3">
-                                    <span className="text-5xl font-bold text-slate-900">${pkg.price}</span>
-                                    <span className="text-slate-600">/month</span>
-                                </div>
-                                <p className="text-slate-600">
-                                    Up to <span className="font-semibold text-slate-900">{pkg.employeeLimit} employees</span>
-                                </p>
-                            </div>
-
-                            <div className="space-y-4 mb-8">
-                                {pkg.features.map((feature, featureIdx) => (
-                                    <div key={featureIdx} className="flex items-start gap-3">
-                                        <FaCheck className="text-green-600 mt-1 shrink-0" />
-                                        <span className="text-slate-700">{feature}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <button
-                                onClick={handleGetStarted}
-                                className={`btn w-full normal-case cursor-pointer ${
-                                    pkg.recommended
-                                        ? 'btn-primary'
-                                        : 'btn-outline'
+                    {packages.map((pkg, idx) => {
+                        // Determine if this package is the active plan
+                        const isActive = activePackage && pkg.name.toLowerCase() === String(activePackage).toLowerCase();
+                        return (
+                            <MotionDiv
+                                key={pkg.name}
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, amount: 0.3 }}
+                                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                                whileHover={{ y: -8 }}
+                                className={`relative rounded-2xl p-8 border-2 transition-all duration-300 ${
+                                    isActive
+                                        ? 'border-green-500 bg-green-50 shadow-2xl'
+                                        : pkg.recommended
+                                            ? 'border-blue-500 bg-blue-50 shadow-xl'
+                                            : 'border-slate-200 bg-white shadow-lg hover:shadow-xl'
                                 }`}
                             >
-                                Get Started
-                            </button>
-                        </MotionDiv>
-                    ))}
+                                {isActive && (
+                                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                                        <span className="bg-green-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                                            Active Plan
+                                        </span>
+                                    </div>
+                                )}
+                                {!isActive && pkg.recommended && (
+                                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                                        <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                                            Most Popular
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div className="text-center mb-6">
+                                    <h3 className="text-2xl font-bold text-slate-900 mb-2">{pkg.name}</h3>
+                                    <div className="flex items-baseline justify-center gap-1 mb-3">
+                                        <span className="text-5xl font-bold text-slate-900">${pkg.price}</span>
+                                        <span className="text-slate-600">/month</span>
+                                    </div>
+                                    <p className="text-slate-600">
+                                        Up to <span className="font-semibold text-slate-900">{pkg.employeeLimit} employees</span>
+                                    </p>
+                                </div>
+
+                                <div className="space-y-4 mb-8">
+                                    {pkg.features.map((feature, featureIdx) => (
+                                        <div key={featureIdx} className="flex items-start gap-3">
+                                            <FaCheck className="text-green-600 mt-1 shrink-0" />
+                                            <span className="text-slate-700">{feature}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={handleGetStarted}
+                                    className={`btn w-full normal-case cursor-pointer ${
+                                        isActive
+                                            ? 'btn-success btn-disabled opacity-80 cursor-not-allowed'
+                                            : pkg.recommended
+                                                ? 'btn-primary'
+                                                : 'btn-outline'
+                                    }`}
+                                    disabled={isActive}
+                                >
+                                    {isActive ? 'Current Plan' : 'Get Started'}
+                                </button>
+                            </MotionDiv>
+                        );
+                    })}
                 </div>
 
                 <MotionDiv

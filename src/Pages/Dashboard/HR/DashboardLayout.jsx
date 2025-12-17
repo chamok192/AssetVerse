@@ -7,6 +7,7 @@ const links = [
     { label: "Requests", to: "/hr/requests" },
     { label: "Employees", to: "/hr/employees" },
     { label: "Upgrade", to: "/hr/upgrade" },
+    { label: "Payments", to: "/hr/payments" },
     { label: "Profile", to: "/profile" }
 ];
 
