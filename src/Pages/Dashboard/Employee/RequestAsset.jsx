@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAssets, createRequest, getUserData } from '../../../Services/api';
 import EmployeeDashboardLayout from './EmployeeDashboardLayout';
+import { toast } from 'react-toastify';
 
 const RequestAsset = () => {
     const [selectedAsset, setSelectedAsset] = useState(null);
@@ -20,14 +21,14 @@ const RequestAsset = () => {
     const requestMutation = useMutation({
         mutationFn: (payload) => createRequest(payload),
         onSuccess: () => {
-            alert('Request submitted successfully!');
+            toast.success('Request submitted successfully!');
             queryClient.invalidateQueries({ queryKey: ['requests'] });
             setShowModal(false);
             setNote('');
             setSelectedAsset(null);
         },
         onError: (err) => {
-            alert('Failed to submit request: ' + (err?.error || 'Unknown error'));
+            toast.error('Failed to submit request: ' + (err?.error || 'Unknown error'));
         }
     });
 
@@ -42,7 +43,7 @@ const RequestAsset = () => {
         if (!selectedAsset) return;
         const user = getUserData();
         if (!user?.email) {
-            alert('User email not found. Please login again.');
+            toast.error('User email not found. Please login again.');
             return;
         }
         

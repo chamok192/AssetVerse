@@ -1,21 +1,24 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getEmployees, removeEmployee } from "../../../Services/api";
+import { getEmployees, removeEmployee, getUserByEmail } from "../../../Services/api";
 import DashboardLayout from "./DashboardLayout";
+import { toast } from 'react-toastify';
 
 const EmployeeList = () => {
     const queryClient = useQueryClient();
     const [removingId, setRemovingId] = useState(null);
 
-    const hrProfile = useMemo(() => {
-        try {
-            return JSON.parse(localStorage.getItem("userData")) || {};
-        } catch {
-            return {};
+    // Fetch HR profile
+    const { data: hrProfile } = useQuery({
+        queryKey: ['hr-profile'],
+        queryFn: async () => {
+            const currentUser = JSON.parse(localStorage.getItem("userData")) || {};
+            const result = await getUserByEmail(currentUser.email);
+            return result.success ? result.data : currentUser;
         }
-    }, []);
+    });
 
-    const limit = hrProfile.packageLimit || hrProfile.package || hrProfile.planLimit || 0;
+    const limit = hrProfile?.packageLimit || 0;
 
     // Fetch employees using TanStack Query
     const { data: employees = [], isLoading } = useQuery({
@@ -32,7 +35,9 @@ const EmployeeList = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['employees'] });
             setRemovingId(null);
-        }
+            toast.success('Employee removed from team successfully!');
+        },
+        onError: (error) => toast.error(error.message || 'Failed to remove employee')
     });
 
     const handleRemove = (employeeId) => {
@@ -45,13 +50,8 @@ const EmployeeList = () => {
     return (
         <DashboardLayout
             title="Employees"
-            subtitle={`${employees.length}/${limit || employees.length || 0} employees used.`}
+            subtitle={`${employees.length}/${limit} employees used.`}
         >
-            {removeEmployeeMutation.error && (
-                <div className="alert alert-error shadow">
-                    <span>{removeEmployeeMutation.error?.message || "Failed to remove employee"}</span>
-                </div>
-            )}
 
             <div className="overflow-x-auto rounded-box bg-base-100 shadow">
                 <table className="table">
@@ -88,7 +88,7 @@ const EmployeeList = () => {
                                     <div className="avatar">
                                         <div className="mask mask-squircle h-12 w-12 bg-base-200">
                                             <img
-                                                src={employee.photo || employee.avatar || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e0e0e0' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='12' fill='%23999' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E"}
+                                                src={employee.profileImage || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e0e0e0' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='12' fill='%23999' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E"}
                                                 alt={employee.name || "Employee"}
                                             />
                                         </div>

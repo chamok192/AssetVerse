@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getEmployeeAssets } from '../../../Services/api';
+import { getEmployeeAssets, api } from '../../../Services/api';
 import EmployeeDashboardLayout from './EmployeeDashboardLayout';
+import { toast } from 'react-toastify';
 
 const EmployeeAssets = () => {
     const [search, setSearch] = useState('');
@@ -23,9 +24,10 @@ const EmployeeAssets = () => {
                 returnDate: new Date().toISOString(),
                 notes: ''
             });
+            toast.success('Asset returned successfully!');
             refetch();
         } catch (err) {
-            // Error handled silently
+            toast.error('Failed to return asset: ' + (err?.response?.data?.error || 'Unknown error'));
         }
     };
 
