@@ -74,6 +74,7 @@ export const getMyTeam = () => handler(() => api.get('/api/my-team'), 'Failed to
 export const createRequest = (data) => handler(() => api.post('/api/requests', data), 'Failed to create request');
 export const updateRequest = (id, data) => handler(() => api.patch(`/api/requests/${id}`, data), 'Failed to update request');
 export const getPackages = () => handler(() => api.get('/api/packages'), 'Failed to fetch packages');
+export const getHRAnalytics = () => handler(() => api.get('/api/hr/analytics'), 'Failed to fetch analytics');
 export const clearToken = () => {
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');

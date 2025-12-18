@@ -8,7 +8,7 @@ import DashboardLayout from "./DashboardLayout";
 const UpgradePackage = () => {
     const [selectedPackage, setSelectedPackage] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { user, load } = useAuth();
+    const { user, load, refetchProfile } = useAuth();
     const userData = user;
     const queryClient = useQueryClient();
 
@@ -31,10 +31,10 @@ const UpgradePackage = () => {
     const handlePaymentSuccess = () => {
         setIsModalOpen(false);
         setSelectedPackage(null);
-        // Invalidate user profile to refresh subscription
-        if (user?.email) {
-            queryClient.invalidateQueries({ queryKey: ['user', user.email, 'profile'] });
-        }
+        // Refetch user profile to update subscription
+        refetchProfile();
+        // Invalidate queries
+        queryClient.invalidateQueries({ queryKey: ['employee-limit'] });
     };
 
     if (load || packagesLoading) {

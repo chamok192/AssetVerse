@@ -2,10 +2,17 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+    PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
+    BarChart, Bar, XAxis, YAxis, CartesianGrid,
+} from 'recharts';
+import {
     deleteAsset,
-    getAssets
+    getAssets,
+    getHRAnalytics
 } from "../../../Services/api";
 import DashboardLayout from "./DashboardLayout";
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 const HRAssetDashboard = () => {
     const navigate = useNavigate();
@@ -20,7 +27,7 @@ const HRAssetDashboard = () => {
     const [page, setPage] = useState(1);
     const limit = 10;
 
-    // Fetch assets using TanStack Query
+
     const { data: queryData = { data: [], totalPages: 1, totalAssets: 0, totalQuantity: 0, lowStock: 0 }, isLoading } = useQuery({
         queryKey: ['assets', { page, limit, search, typeFilter, categoryFilter }],
         queryFn: async () => {
@@ -36,10 +43,19 @@ const HRAssetDashboard = () => {
         keepPreviousData: true
     });
 
+    const { data: analyticsData = { typeDistribution: [], topRequests: [] }, isLoading: isAnalyticsLoading } = useQuery({
+        queryKey: ['hr-analytics'],
+        queryFn: async () => {
+            const result = await getHRAnalytics();
+            return result.data || { typeDistribution: [], topRequests: [] };
+        }
+    });
+
     const assets = queryData.data;
     const totalPages = queryData.totalPages;
 
-    // Mutation for deleting assets
+
+
     const deleteAssetMutation = useMutation({
         mutationFn: deleteAsset,
         onSuccess: () => {
@@ -105,7 +121,52 @@ const HRAssetDashboard = () => {
             title="Asset Management"
             subtitle="Track hardware, office gear, and peripherals in one place."
         >
+            {/* Analytics Section */}
+            <div className="grid gap-6 lg:grid-cols-2 mb-8">
+                <div className="rounded-2xl bg-base-100 p-6 shadow">
+                    <h3 className="mb-4 text-lg font-bold">Item Distribution</h3>
+                    <div className="relative h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                            <PieChart>
+                                <Pie
+                                    data={analyticsData.typeDistribution}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                >
+                                    {analyticsData.typeDistribution.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend verticalAlign="bottom" height={36} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                <div className="rounded-2xl bg-base-100 p-6 shadow">
+                    <h3 className="mb-4 text-lg font-bold">Top 5 Requested Assets</h3>
+                    <div className="relative h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                            <BarChart data={analyticsData.topRequests}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                                <Tooltip cursor={{ fill: 'transparent' }} />
+                                <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            </div>
+
             <div className="rounded-2xl bg-base-100 p-5 shadow">
+
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                         <p className="text-sm text-base-content/70">Overview</p>

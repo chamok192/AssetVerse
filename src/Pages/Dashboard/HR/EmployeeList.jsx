@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getEmployees, removeEmployee, getUserByEmail } from "../../../Services/api";
 import DashboardLayout from "./DashboardLayout";
@@ -7,15 +8,18 @@ import { useAuth } from "../../../Contents/AuthContext/useAuth";
 
 const EmployeeList = () => {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const [removingId, setRemovingId] = useState(null);
     const { user: hrProfile, load } = useAuth();
 
     const limit = hrProfile?.packageLimit || 5;
+    const currentCount = hrProfile?.currentEmployees || 0;
+    const isLimitReached = currentCount >= limit;
 
     const [page, setPage] = useState(1);
     const pageLimit = 10;
 
-    // Fetch employees using TanStack Query
+
     const { data: queryData = { data: [], totalPages: 1 }, isLoading } = useQuery({
         queryKey: ['employees', page],
         queryFn: async () => {
@@ -31,7 +35,7 @@ const EmployeeList = () => {
     const employees = queryData.data;
     const totalPages = queryData.totalPages;
 
-    // Mutation for removing an employee
+
     const removeEmployeeMutation = useMutation({
         mutationFn: removeEmployee,
         onSuccess: () => {
@@ -62,8 +66,18 @@ const EmployeeList = () => {
     return (
         <DashboardLayout
             title="Employees"
-            subtitle={`${employees.length}/${limit} employees used.`}
+            subtitle={`${currentCount}/${limit} employees used.`}
         >
+            {isLimitReached && (
+                <div className="alert alert-warning mb-6 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <div>
+                        <h3 className="font-bold">Plan Limit Reached!</h3>
+                        <div className="text-xs">Your current plan limit of {limit} employees has been reached. You cannot add new members until you upgrade.</div>
+                    </div>
+                    <button className="btn btn-sm" onClick={() => navigate('/hr/upgrade')}>Upgrade Plan</button>
+                </div>
+            )}
             <div className="overflow-x-auto rounded-box bg-base-100 shadow">
                 <table className="table">
                     <thead>

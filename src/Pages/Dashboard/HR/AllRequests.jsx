@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateRequest, getRequests } from "../../../Services/api";
+import { updateRequest, getRequests, getEmployeeLimitCheck } from "../../../Services/api";
 import DashboardLayout from "./DashboardLayout";
 import { toast } from 'react-toastify';
+import { useAuth } from "../../../Contents/AuthContext/useAuth";
 
 const statusColors = {
     pending: "badge-warning",
@@ -12,9 +14,11 @@ const statusColors = {
 
 const AllRequests = () => {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
+    const { user: hrProfile } = useAuth();
     const [processingId, setProcessingId] = useState(null);
 
-    // Fetch requests using TanStack Query
+
     const { data: requests = [], isLoading } = useQuery({
         queryKey: ['requests'],
         queryFn: async () => {
@@ -24,20 +28,39 @@ const AllRequests = () => {
         onError: (err) => console.error('Failed to fetch requests:', err)
     });
 
-    // Mutation for approving requests
+
+    const { data: limitData, isLoading: limitLoading } = useQuery({
+        queryKey: ['employee-limit'],
+        queryFn: async () => {
+            const result = await getEmployeeLimitCheck();
+            return result.success ? result.data : null;
+        },
+        onError: (err) => console.error('Failed to fetch limit:', err)
+    });
+
+
     const approveMutation = useMutation({
         mutationFn: (id) => updateRequest(id, { status: 'accepted' }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['requests'] });
             queryClient.invalidateQueries({ queryKey: ['employees'] });
             queryClient.invalidateQueries({ queryKey: ['assets'] });
+            queryClient.invalidateQueries({ queryKey: ['employee-limit'] });
             setProcessingId(null);
             toast.success('Request approved successfully!');
         },
-        onError: (error) => toast.error(error.message || 'Failed to approve request')
+        onError: (error) => {
+            setProcessingId(null);
+            if (error.includes('limit reached')) {
+                toast.error("Plan limit exceeded. Please upgrade.");
+                navigate('/hr/upgrade');
+            } else {
+                toast.error(error || 'Failed to approve request');
+            }
+        }
     });
 
-    // Mutation for rejecting requests
+
     const rejectMutation = useMutation({
         mutationFn: (id) => updateRequest(id, { status: 'rejected' }),
         onSuccess: () => {
@@ -67,6 +90,14 @@ const AllRequests = () => {
             title="Requests"
             subtitle="Review employee asset requests and approve or reject with one click."
         >
+            {limitData && !limitData.canAdd && (
+                <div className="alert alert-warning mb-4">
+                    <span>Employee limit exceeded. Please upgrade your plan.</span>
+                    <button className="btn btn-sm btn-primary" onClick={() => navigate('/hr/upgrade')}>
+                        Upgrade
+                    </button>
+                </div>
+            )}
             <div className="overflow-x-auto rounded-box bg-base-100 shadow">
                 <table className="table">
                     <thead>
@@ -122,7 +153,7 @@ const AllRequests = () => {
                                         type="button"
                                         className="btn btn-sm"
                                         onClick={() => handleApprove(req._id)}
-                                        disabled={processingId === req._id || req.status === "accepted" || approveMutation.isPending || rejectMutation.isPending}
+                                        disabled={processingId === req._id || req.status === "accepted" || approveMutation.isPending || rejectMutation.isPending || !limitData?.canAdd}
                                     >
                                         Approve
                                     </button>

@@ -39,6 +39,13 @@ const AuthProvider = ({ children }) => {
         }
     };
 
+    const refetchProfile = async () => {
+        const firebaseUser = auth.currentUser;
+        if (firebaseUser) {
+            await fetchAndSyncUserProfile(firebaseUser);
+        }
+    };
+
     useEffect(() => {
         const unsub = onAuthStateChanged(auth, (cur) => {
             fetchAndSyncUserProfile(cur);
@@ -46,7 +53,7 @@ const AuthProvider = ({ children }) => {
         return () => unsub();
     }, []);
 
-    return <AuthContext.Provider value={{ user, load }}>{children}</AuthContext.Provider>;
+    return <AuthContext.Provider value={{ user, load, refetchProfile }}>{children}</AuthContext.Provider>;
 };
 
 export default AuthProvider;
