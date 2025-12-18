@@ -44,7 +44,7 @@ export const createUser = (data) => handler(() => api.post('/api/users', data), 
 export const getUserByEmail = (email) => handler(() => api.get(`/api/users/email/${email}`), 'User not found');
 export const updateUser = (id, data) => handler(() => api.put(`/api/users/${id}`, data), 'Failed to update user');
 export const updateUserProfile = (data) => handler(() => api.patch('/api/users/profile', data), 'Failed to update profile');
-export const getAssets = () => handler(() => api.get('/api/assets'), 'Failed to fetch assets');
+export const getAssets = (page = 1, limit = 10, search = '', filter = 'all') => handler(() => api.get(`/api/assets?page=${page}&limit=${limit}&search=${search}&filter=${filter}`), 'Failed to fetch assets');
 export const createAsset = (data) => {
     const user = getUserData();
     return handler(() => api.post('/api/assets', { ...data, hrEmail: user?.email || '' }), 'Failed to create asset');
@@ -59,7 +59,7 @@ export const getEmployeeLimitCheck = () => handler(() => api.get('/api/users/lim
 export const getRequests = () => handler(() => api.get('/api/requests'), 'Failed to fetch requests');
 export const approveRequest = (id) => handler(() => api.put(`/api/requests/${id}/approve`), 'Failed to approve');
 export const rejectRequest = (id) => handler(() => api.put(`/api/requests/${id}/reject`), 'Failed to reject');
-export const getEmployees = () => handler(() => api.get('/api/employees'), 'Failed to fetch employees');
+export const getEmployees = (page = 1, limit = 10) => handler(() => api.get(`/api/employees?page=${page}&limit=${limit}`), 'Failed to fetch employees');
 export const removeEmployee = (id) => handler(() => api.delete(`/api/employees/${id}`), 'Failed to remove employee');
 export const getPaymentHistory = () => handler(() => api.get('/api/payments/history'), 'Failed to fetch history');
 export const createPaymentIntent = (data) => handler(() => api.post('/api/payments/create-checkout', data), 'Failed to create checkout session');
@@ -72,6 +72,8 @@ export const getPackages = () => handler(() => api.get('/api/packages'), 'Failed
 export const clearToken = () => {
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
+    localStorage.removeItem('userData');
+    sessionStorage.removeItem('userData');
 };
 
 export { api };

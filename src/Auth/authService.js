@@ -39,7 +39,7 @@ export const uploadImageToImgBB = async (file) => {
     try {
         const formData = new FormData();
         formData.append('image', await fileToBase64(file));
-        const res = await axios.post(`https://api.imgbb.com/1/upload?expiration=600&key=${imageHostKey}`, formData);
+        const res = await axios.post(`https://api.imgbb.com/1/upload?key=${imageHostKey}`, formData);
         return res.data?.data?.url ? { success: true, url: res.data.data.url } : { success: false, error: 'Upload failed' };
     } catch { return { success: false, error: 'Upload failed' }; }
 };
@@ -56,29 +56,29 @@ const fetchUserData = async (email, token) => {
         const userData = res.data?.success ? res.data.data : (res.data?.data || res.data);
         return userData || null;
     } catch {
-        return null; 
+        return null;
     }
 };
 
 export const loginWithEmail = async (email, password) => {
     try {
         const { user: fbUser } = await signInWithEmailAndPassword(auth, email, password);
-        
+
         const tokenRes = await axios.post(`${apiBase}/api/auth/login`, { email, uid: fbUser.uid }).catch(() => ({}));
         const token = tokenRes.data?.token;
         const backendUser = tokenRes.data?.user;
-        
+
         if (!backendUser) {
             return { success: false, error: 'User account not found. Please register first.' };
         }
-        
+
         if (token) {
             localStorage.setItem('token', token);
             sessionStorage.setItem('token', token);
         }
 
         let role = backendUser.role || 'Employee';
-        
+
         // Normalize role to proper format: "HR" or "Employee"
         if (typeof role === 'string') {
             const roleLower = role.toLowerCase();
@@ -90,7 +90,7 @@ export const loginWithEmail = async (email, password) => {
                 role = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
             }
         }
-        
+
         const userData = {
             uid: fbUser.uid,
             email: fbUser.email,
@@ -100,7 +100,7 @@ export const loginWithEmail = async (email, password) => {
             role: role,
             ...backendUser
         };
-        
+
         saveUser(userData);
         return { success: true, user: fbUser, userData };
     } catch (e) {
@@ -112,7 +112,7 @@ const registerUser = async (data, role, extraFields = {}) => {
     try {
         const { user: fbUser } = await createUserWithEmailAndPassword(auth, data.email, data.password);
         await updateProfile(fbUser, { displayName: data.name, photoURL: data.profileImage || '' });
-        
+
         const userData = {
             uid: fbUser.uid,
             name: data.name,
@@ -122,12 +122,12 @@ const registerUser = async (data, role, extraFields = {}) => {
             role: role,
             ...extraFields
         };
-        
+
         const res = await axios.post(`${apiBase}/api/users`, userData);
         if (!res.data?.success) {
             throw new Error('Failed to save user to database');
         }
-        
+
         saveUser(userData);
         return { success: true, user: fbUser, userData };
     } catch (e) {
@@ -153,7 +153,10 @@ export const registerHRManager = async (data) => {
 export const logoutUser = async () => {
     try {
         await signOut(auth);
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
         localStorage.removeItem('userData');
+        sessionStorage.removeItem('userData');
         window.dispatchEvent(new Event('storage'));
         return { success: true };
     } catch (e) {

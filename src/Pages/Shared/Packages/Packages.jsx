@@ -5,45 +5,27 @@ import { useAuth } from '../../../Contents/AuthContext/useAuth';
 
 const MotionDiv = motion.div;
 
-const packages = [
-    {
-        name: "Basic",
-        employeeLimit: 10,
-        price: 5,
-        features: ["Asset Tracking", "Employee Management", "Basic Support"],
-        recommended: false
-    },
-    {
-        name: "Standard",
-        employeeLimit: 20,
-        price: 8,
-        features: ["All Basic features", "Advanced Analytics", "Priority Support"],
-        recommended: true
-    },
-    {
-        name: "Premium",
-        employeeLimit: 30,
-        price: 15,
-        features: ["All Standard features", "Custom Branding", "24/7 Support"],
-        recommended: false
-    }
-];
+import { useQuery } from '@tanstack/react-query';
+import { getPackages } from '../../../Services/api';
 
 const Packages = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    // Get current user's active package (subscription)
-    let activePackage = null;
-    if (user) {
-        const userData = JSON.parse(localStorage.getItem('userData')) || {};
-        activePackage = userData.subscription || null;
-    }
+    // Fetch packages from the server
+    const { data: packages = [], isLoading } = useQuery({
+        queryKey: ['packages'],
+        queryFn: async () => {
+            const result = await getPackages();
+            return result.success && Array.isArray(result.data) ? result.data : [];
+        }
+    });
+
+    const activePackage = (user?.subscription || 'free').toLowerCase();
 
     const handleGetStarted = () => {
         if (user) {
-            const userData = JSON.parse(localStorage.getItem('userData')) || {};
-            const role = userData.role || user.role;
+            const role = user.role;
             if (role?.toLowerCase() === 'hr') {
                 navigate('/hr/upgrade');
             } else {
@@ -53,6 +35,13 @@ const Packages = () => {
             navigate('/join/hr-manager');
         }
     };
+
+    if (isLoading) {
+        return <div className="flex justify-center py-20"><span className="loading loading-spinner loading-lg"></span></div>;
+    }
+
+    // Sort packages by price
+    const sortedPackages = [...packages].sort((a, b) => a.price - b.price);
 
     return (
         <section id="pricing" className="py-16 px-6 lg:px-16 bg-white">
@@ -73,24 +62,26 @@ const Packages = () => {
                 </MotionDiv>
 
                 <div className="grid gap-8 md:grid-cols-3 lg:gap-6">
-                    {packages.map((pkg, idx) => {
-                        // Determine if this package is the active plan
-                        const isActive = activePackage && pkg.name.toLowerCase() === String(activePackage).toLowerCase();
+                    {sortedPackages.map((pkg, idx) => {
+                        // Determine if this package is the active plan. 
+                        // Note: pkg.id is used for comparison as per database schema
+                        const isActive = activePackage === (pkg.id || pkg.name.toLowerCase());
+                        const isRecommended = pkg.name.toLowerCase() === 'standard'; // Or use logic based on popularity if available
+
                         return (
                             <MotionDiv
-                                key={pkg.name}
+                                key={pkg.id || pkg.name}
                                 initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, amount: 0.3 }}
                                 transition={{ duration: 0.5, delay: idx * 0.1 }}
                                 whileHover={{ y: -8 }}
-                                className={`relative rounded-2xl p-8 border-2 transition-all duration-300 ${
-                                    isActive
+                                className={`relative rounded-2xl p-8 border-2 transition-all duration-300 ${isActive
                                         ? 'border-green-500 bg-green-50 shadow-2xl'
-                                        : pkg.recommended
+                                        : isRecommended
                                             ? 'border-blue-500 bg-blue-50 shadow-xl'
                                             : 'border-slate-200 bg-white shadow-lg hover:shadow-xl'
-                                }`}
+                                    }`}
                             >
                                 {isActive && (
                                     <div className="absolute -top-4 left-1/2 -translate-x-1/2">
@@ -99,7 +90,7 @@ const Packages = () => {
                                         </span>
                                     </div>
                                 )}
-                                {!isActive && pkg.recommended && (
+                                {!isActive && isRecommended && (
                                     <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                                         <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
                                             Most Popular
@@ -129,13 +120,12 @@ const Packages = () => {
 
                                 <button
                                     onClick={handleGetStarted}
-                                    className={`btn w-full normal-case cursor-pointer ${
-                                        isActive
+                                    className={`btn w-full normal-case cursor-pointer ${isActive
                                             ? 'btn-success btn-disabled opacity-80 cursor-not-allowed'
-                                            : pkg.recommended
+                                            : isRecommended
                                                 ? 'btn-primary'
                                                 : 'btn-outline'
-                                    }`}
+                                        }`}
                                     disabled={isActive}
                                 >
                                     {isActive ? 'Current Plan' : 'Get Started'}
@@ -153,7 +143,7 @@ const Packages = () => {
                     className="mt-12 text-center"
                 >
                     <p className="text-slate-600">
-                        Need a custom solution for your enterprise? 
+                        Need a custom solution for your enterprise?
                         <a href="#" className="text-blue-600 font-semibold hover:underline ml-1">
                             Contact our sales team
                         </a>

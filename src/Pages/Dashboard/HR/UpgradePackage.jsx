@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getUserByEmail, getPackages } from "../../../Services/api";
 import { useAuth } from "../../../Contents/AuthContext/useAuth.js";
 import PaymentModal from "../../../Components/PaymentModal";
@@ -8,8 +8,9 @@ import DashboardLayout from "./DashboardLayout";
 const UpgradePackage = () => {
     const [selectedPackage, setSelectedPackage] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentSubscription, setCurrentSubscription] = useState(null);
-    const { user } = useAuth();
+    const { user, load } = useAuth();
+    const userData = user;
+    const queryClient = useQueryClient();
 
     // Fetch packages from database
     const { data: packages = [], isLoading: packagesLoading } = useQuery({
@@ -20,18 +21,7 @@ const UpgradePackage = () => {
         }
     });
 
-    // Fetch current user subscription
-    useEffect(() => {
-        const fetchUserData = async () => {
-            if (user?.email) {
-                const result = await getUserByEmail(user.email);
-                if (result.success && result.data?.subscription) {
-                    setCurrentSubscription(result.data.subscription);
-                }
-            }
-        };
-        fetchUserData();
-    }, [user?.email]);
+    const currentSubscription = (userData?.subscription || 'free').toLowerCase();
 
     const openPaymentModal = (pkg) => {
         setSelectedPackage(pkg);
@@ -41,19 +31,13 @@ const UpgradePackage = () => {
     const handlePaymentSuccess = () => {
         setIsModalOpen(false);
         setSelectedPackage(null);
-        // Refresh user subscription status
+        // Invalidate user profile to refresh subscription
         if (user?.email) {
-            const fetchUserData = async () => {
-                const result = await getUserByEmail(user.email);
-                if (result.success && result.data?.subscription) {
-                    setCurrentSubscription(result.data.subscription);
-                }
-            };
-            fetchUserData();
+            queryClient.invalidateQueries({ queryKey: ['user', user.email, 'profile'] });
         }
     };
 
-    if (packagesLoading) {
+    if (load || packagesLoading) {
         return (
             <DashboardLayout
                 title="Upgrade Package"
@@ -75,13 +59,12 @@ const UpgradePackage = () => {
                 {packages.map((pkg) => {
                     const isActive = currentSubscription === pkg.id;
                     return (
-                        <div 
-                            key={pkg.id} 
-                            className={`card shadow hover:shadow-lg transition-all ${
-                                isActive 
-                                    ? 'bg-primary text-primary-content ring-2 ring-primary' 
-                                    : 'bg-base-100'
-                            }`}
+                        <div
+                            key={pkg.id}
+                            className={`card shadow hover:shadow-lg transition-all ${isActive
+                                ? 'bg-primary text-primary-content ring-2 ring-primary'
+                                : 'bg-base-100'
+                                }`}
                         >
                             <div className="card-body">
                                 <div className="flex items-center justify-between mb-2">
@@ -101,23 +84,19 @@ const UpgradePackage = () => {
                                     </p>
                                 </div>
                                 <div className={`divider my-2 ${isActive ? 'bg-primary-content/20' : ''}`}></div>
-                                <p className={`text-sm font-semibold mb-3 ${
-                                    isActive ? 'text-primary-content/90' : 'text-base-content/70'
-                                }`}>
-                                    Employee limit: <span className={`badge ${
-                                        isActive ? 'badge-accent' : 'badge-outline'
+                                <p className={`text-sm font-semibold mb-3 ${isActive ? 'text-primary-content/90' : 'text-base-content/70'
                                     }`}>
+                                    Employee limit: <span className={`badge ${isActive ? 'badge-accent' : 'badge-outline'
+                                        }`}>
                                         {pkg.employeeLimit}
                                     </span>
                                 </p>
-                                <ul className={`space-y-2 text-sm mb-6 grow ${
-                                    isActive ? 'text-primary-content/95' : ''
-                                }`}>
+                                <ul className={`space-y-2 text-sm mb-6 grow ${isActive ? 'text-primary-content/95' : ''
+                                    }`}>
                                     {pkg.features.map((f) => (
                                         <li key={f} className="flex items-start">
-                                            <span className={`mr-2 font-bold ${
-                                                isActive ? 'text-accent' : 'text-success'
-                                            }`}>
+                                            <span className={`mr-2 font-bold ${isActive ? 'text-accent' : 'text-success'
+                                                }`}>
                                                 ✓
                                             </span>
                                             <span>{f}</span>
@@ -126,11 +105,10 @@ const UpgradePackage = () => {
                                 </ul>
                                 <button
                                     type="button"
-                                    className={`btn btn-block ${
-                                        isActive 
-                                            ? 'btn-disabled btn-outline' 
-                                            : 'btn-primary'
-                                    }`}
+                                    className={`btn btn-block ${isActive
+                                        ? 'btn-disabled btn-outline'
+                                        : 'btn-primary'
+                                        }`}
                                     onClick={() => !isActive && openPaymentModal(pkg)}
                                     disabled={isActive}
                                 >
@@ -143,8 +121,8 @@ const UpgradePackage = () => {
             </div>
 
             {selectedPackage && isModalOpen && (
-                <PaymentModal 
-                    isOpen={isModalOpen} 
+                <PaymentModal
+                    isOpen={isModalOpen}
                     onClose={() => {
                         setIsModalOpen(false);
                         setSelectedPackage(null);

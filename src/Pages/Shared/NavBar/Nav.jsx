@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import Logo from '../../../Components/Logo/Logo';
 import { Link, NavLink, useLocation } from 'react-router';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../../../FireBase/firebase.init';
+import { useAuth } from '../../../Contents/AuthContext/useAuth';
 import { logoutUser } from '../../../Auth/authService';
 
 const DEF_IMG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"%3E%3Crect fill="%23e0e0e0" width="150" height="150"/%3E%3Ctext x="50%25" y="50%25" font-family="Arial" font-size="14" fill="%23999" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
@@ -11,29 +10,11 @@ const empMenu = [{ label: 'Dashboard', to: '/employee/dashboard' }, { label: 'My
 const hrMenu = [{ label: 'Dashboard', to: '/hr/assets' }, { label: 'Asset List', to: '/hr/assets' }, { label: 'Add Asset', to: '/hr/assets/new' }, { label: 'All Requests', to: '/hr/requests' }, { label: 'Upgrade Package', to: '/hr/upgrade' }, { label: 'Employee List', to: '/hr/employees' }, { label: 'Profile', to: '/profile' }, { label: 'Logout', action: 'logout' }];
 
 const Nav = () => {
-    const [user, setUser] = useState(null);
+    const { user, load } = useAuth();
     const [pricing, setPricing] = useState(false);
     const [mobile, setMobile] = useState(false);
     const [profile, setProfile] = useState(false);
     const location = useLocation();
-
-    useEffect(() => {
-        const updateUser = (cur) => {
-            if (!cur) return setUser(null);
-            cur.reload().then(() => {
-                const data = JSON.parse(localStorage.getItem('userData')) || {};
-                const avatar = cur.photoURL || data.profileImage || data.avatar || DEF_IMG;
-                setUser({ uid: cur.uid, name: cur.displayName || data.name || 'User', email: cur.email, avatar, role: data.role || 'employee' });
-            }).catch(() => {
-                const data = JSON.parse(localStorage.getItem('userData')) || {};
-                setUser({ uid: cur.uid, name: cur.displayName || data.name || 'User', email: cur.email, avatar: cur.photoURL || data.profileImage || DEF_IMG, role: data.role || 'employee' });
-            });
-        };
-
-        const unsub = onAuthStateChanged(auth, updateUser);
-        window.addEventListener('storage', () => updateUser(auth.currentUser));
-        return () => { unsub(); window.removeEventListener('storage', () => updateUser(auth.currentUser)); };
-    }, []);
 
     useEffect(() => {
         const handle = () => {
@@ -53,7 +34,7 @@ const Nav = () => {
 
     const Item = ({ item }) => (
         <li key={item.label}>
-            {item.to ? (item.isHash ? <a href={item.to} onClick={e => { e.preventDefault(); scroll(item.to.substring(1)); close(); }} className="text-base-content/70 hover:text-base-content">{item.label}</a> : <NavLink to={item.to} className={linkClass} onClick={close}>{item.label}</NavLink>) : <button type="button" onClick={async () => { await logoutUser(); setUser(null); close(); }}>{item.label}</button>}
+            {item.to ? (item.isHash ? <a href={item.to} onClick={e => { e.preventDefault(); scroll(item.to.substring(1)); close(); }} className="text-base-content/70 hover:text-base-content">{item.label}</a> : <NavLink to={item.to} className={linkClass} onClick={close}>{item.label}</NavLink>) : <button type="button" onClick={async () => { await logoutUser(); close(); }}>{item.label}</button>}
         </li>
     );
 
@@ -85,7 +66,7 @@ const Nav = () => {
                 {user && (
                     <div className={`dropdown dropdown-end ${profile ? 'dropdown-open' : ''}`}>
                         <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar" onClick={() => setProfile(p => !p)}>
-                            <div className="w-10 rounded-full"><img alt={user.name} src={user.avatar} /></div>
+                            <div className="w-10 rounded-full"><img alt={user.name} src={user.profileImage || user.photoURL || DEF_IMG} /></div>
                         </div>
                         <ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-56 p-2 shadow">
                             <li className="menu-title">{user.name}</li>

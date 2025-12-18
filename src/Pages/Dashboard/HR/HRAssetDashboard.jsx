@@ -16,14 +16,24 @@ const HRAssetDashboard = () => {
     const [sortKey, setSortKey] = useState("date-desc");
     const [deletingId, setDeletingId] = useState(null);
 
+    const [page, setPage] = useState(1);
+    const limit = 10;
+
     // Fetch assets using TanStack Query
-    const { data: assets = [], isLoading } = useQuery({
-        queryKey: ['assets'],
+    const { data: queryData = { data: [], totalPages: 1 }, isLoading } = useQuery({
+        queryKey: ['assets', { page, limit, search, typeFilter }],
         queryFn: async () => {
-            const result = await getAssets();
-            return result.success ? (Array.isArray(result.data) ? result.data : []) : [];
-        }
+            const result = await getAssets(page, limit, search, typeFilter);
+            return {
+                data: result.data || [],
+                totalPages: result.totalPages || 1
+            };
+        },
+        keepPreviousData: true
     });
+
+    const assets = queryData.data;
+    const totalPages = queryData.totalPages;
 
     // Mutation for deleting assets
     const deleteAssetMutation = useMutation({
@@ -43,26 +53,10 @@ const HRAssetDashboard = () => {
     }, [assets]);
 
     const filteredAssets = useMemo(() => {
-        const term = search.trim().toLowerCase();
+        // Since we are doing server side pagination/searching, the data 'assets' is already filtered by search/type from the server.
+        // We only apply client side sorting on the current page data for UX responsiveness on the view.
 
-        const filtered = assets.filter((asset) => {
-            const assetName = asset.productName || asset.name || "";
-            const assetType = asset.productType || asset.type || "";
-            const assetTag = asset.tag || "";
-            const assetSerial = asset.serial || "";
-
-            const matchesSearch = !term ||
-                assetName.toLowerCase().includes(term) ||
-                assetType.toLowerCase().includes(term) ||
-                assetTag.toLowerCase().includes(term) ||
-                assetSerial.toLowerCase().includes(term);
-
-            const matchesType = typeFilter === "all" || (assetType.toLowerCase() === typeFilter);
-            const matchesCategory = categoryFilter === "all" || (asset.category === categoryFilter);
-            return matchesSearch && matchesType && matchesCategory;
-        });
-
-        const sorted = [...filtered].sort((a, b) => {
+        const sorted = [...assets].sort((a, b) => {
             if (sortKey === "date-desc") return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
             if (sortKey === "date-asc") return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
             const qtyA = a.productQuantity ?? a.quantity ?? 0;
@@ -74,8 +68,13 @@ const HRAssetDashboard = () => {
             return nameA.localeCompare(nameB);
         });
 
+        // Secondary client-side Category filter (if needed, though ideally should be server too)
+        if (categoryFilter !== 'all') {
+            return sorted.filter(asset => asset.category === categoryFilter);
+        }
+
         return sorted;
-    }, [assets, search, typeFilter, categoryFilter, sortKey]);
+    }, [assets, sortKey, categoryFilter]);
 
     const totals = useMemo(() => {
         const totalQuantity = assets.reduce((sum, item) => sum + (Number(item.productQuantity || item.quantity) || 0), 0);
@@ -262,7 +261,7 @@ const HRAssetDashboard = () => {
                             const assetName = asset.productName || asset.name || "Untitled";
                             const assetImage = asset.productImage || asset.image || asset.imageUrl;
                             const assetType = asset.productType || asset.type || "N/A";
-                            
+
                             return (
                                 <tr key={asset._id} className="hover">
                                     <td>
@@ -312,6 +311,26 @@ const HRAssetDashboard = () => {
                         })}
                     </tbody>
                 </table>
+            </div>
+
+            <div className="flex justify-center mt-6">
+                <div className="join">
+                    <button
+                        className="join-item btn"
+                        disabled={page === 1}
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                    >
+                        «
+                    </button>
+                    <button className="join-item btn">Page {page} of {totalPages}</button>
+                    <button
+                        className="join-item btn"
+                        disabled={page >= totalPages}
+                        onClick={() => setPage(p => p + 1)}
+                    >
+                        »
+                    </button>
+                </div>
             </div>
         </DashboardLayout>
     );

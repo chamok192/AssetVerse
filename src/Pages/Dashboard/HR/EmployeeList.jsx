@@ -3,31 +3,33 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getEmployees, removeEmployee, getUserByEmail } from "../../../Services/api";
 import DashboardLayout from "./DashboardLayout";
 import { toast } from 'react-toastify';
+import { useAuth } from "../../../Contents/AuthContext/useAuth";
 
 const EmployeeList = () => {
     const queryClient = useQueryClient();
     const [removingId, setRemovingId] = useState(null);
+    const { user: hrProfile, load } = useAuth();
 
-    // Fetch HR profile
-    const { data: hrProfile } = useQuery({
-        queryKey: ['hr-profile'],
-        queryFn: async () => {
-            const currentUser = JSON.parse(localStorage.getItem("userData")) || {};
-            const result = await getUserByEmail(currentUser.email);
-            return result.success ? result.data : currentUser;
-        }
-    });
+    const limit = hrProfile?.packageLimit || 5;
 
-    const limit = hrProfile?.packageLimit || 0;
+    const [page, setPage] = useState(1);
+    const pageLimit = 10;
 
     // Fetch employees using TanStack Query
-    const { data: employees = [], isLoading } = useQuery({
-        queryKey: ['employees'],
+    const { data: queryData = { data: [], totalPages: 1 }, isLoading } = useQuery({
+        queryKey: ['employees', page],
         queryFn: async () => {
-            const result = await getEmployees();
-            return result.success ? (Array.isArray(result.data) ? result.data : []) : [];
-        }
+            const result = await getEmployees(page, pageLimit);
+            return {
+                data: result.success ? result.data : [],
+                totalPages: result.totalPages || 1
+            };
+        },
+        keepPreviousData: true
     });
+
+    const employees = queryData.data;
+    const totalPages = queryData.totalPages;
 
     // Mutation for removing an employee
     const removeEmployeeMutation = useMutation({
@@ -47,12 +49,21 @@ const EmployeeList = () => {
         removeEmployeeMutation.mutate(employeeId);
     };
 
+    if (load) {
+        return (
+            <DashboardLayout title="Employees" subtitle="Loading...">
+                <div className="flex items-center justify-center py-12">
+                    <span className="loading loading-spinner loading-lg"></span>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
     return (
         <DashboardLayout
             title="Employees"
             subtitle={`${employees.length}/${limit} employees used.`}
         >
-
             <div className="overflow-x-auto rounded-box bg-base-100 shadow">
                 <table className="table">
                     <thead>
@@ -112,6 +123,26 @@ const EmployeeList = () => {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            <div className="flex justify-center mt-6">
+                <div className="join">
+                    <button
+                        className="join-item btn"
+                        disabled={page === 1}
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                    >
+                        «
+                    </button>
+                    <button className="join-item btn">Page {page} of {totalPages}</button>
+                    <button
+                        className="join-item btn"
+                        disabled={page >= totalPages}
+                        onClick={() => setPage(p => p + 1)}
+                    >
+                        »
+                    </button>
+                </div>
             </div>
         </DashboardLayout>
     );

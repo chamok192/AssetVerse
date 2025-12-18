@@ -2,8 +2,11 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getUsers } from '../../../Services/api';
 import EmployeeDashboardLayout from './EmployeeDashboardLayout';
+import { useUserData } from '../../../Hooks/useUserData';
 
 const EmployeeTeam = () => {
+    const { data: currentUser } = useUserData();
+
     const { data: employees = [], isLoading } = useQuery({
         queryKey: ['employees'],
         queryFn: async () => {
@@ -12,10 +15,16 @@ const EmployeeTeam = () => {
         }
     });
 
-    // Filter to only show employees 
+    // Filter to only show employees in the same companies as current user
     const teamMembers = useMemo(() => {
-        return employees.filter(emp => emp.role?.toLowerCase() === 'employee');
-    }, [employees]);
+        if (!currentUser?.companies || !Array.isArray(currentUser.companies)) return [];
+        const userCompanyNames = currentUser.companies.map(c => c.companyName);
+        return employees.filter(emp => 
+            emp.role?.toLowerCase() === 'employee' && 
+            emp.companies?.some(c => userCompanyNames.includes(c.companyName)) &&
+            emp.email !== currentUser.email // Exclude self
+        );
+    }, [employees, currentUser]);
 
     const getCurrentMonthBirthdays = (employees) => {
         const currentMonth = new Date().getMonth();
