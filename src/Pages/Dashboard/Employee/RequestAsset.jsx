@@ -8,15 +8,24 @@ const RequestAsset = () => {
     const [selectedAsset, setSelectedAsset] = useState(null);
     const [note, setNote] = useState('');
     const [showModal, setShowModal] = useState(false);
+    const [page, setPage] = useState(1);
+    const limit = 10;
     const queryClient = useQueryClient();
 
-    const { data: assets = [], isLoading } = useQuery({
-        queryKey: ['assets'],
+    const { data: queryData = { data: [], totalPages: 1 }, isLoading } = useQuery({
+        queryKey: ['assets', { page, limit, stockStatus: 'available' }],
         queryFn: async () => {
-            const result = await getAssets();
-            return result.success ? (Array.isArray(result.data) ? result.data : []) : [];
-        }
+            const result = await getAssets(page, limit, '', 'all', 'available');
+            return {
+                data: result.data || [],
+                totalPages: result.totalPages || 1
+            };
+        },
+        keepPreviousData: true
     });
+
+    const assets = queryData.data;
+    const totalPages = queryData.totalPages;
 
     const requestMutation = useMutation({
         mutationFn: (payload) => createRequest(payload),
@@ -32,8 +41,6 @@ const RequestAsset = () => {
         }
     });
 
-    const availableAssets = assets.filter(asset => asset.quantity > 0);
-
     const handleRequestClick = (asset) => {
         setSelectedAsset(asset);
         setShowModal(true);
@@ -46,7 +53,7 @@ const RequestAsset = () => {
             toast.error('User email not found. Please login again.');
             return;
         }
-        
+
         requestMutation.mutate({
             assetId: selectedAsset._id,
             note: note,
@@ -67,39 +74,60 @@ const RequestAsset = () => {
 
     return (
         <EmployeeDashboardLayout title="Request an Asset" subtitle="Browse and request assets from available inventory.">
-            {availableAssets.length === 0 ? (
+            {assets.length === 0 ? (
                 <div className="rounded-lg bg-base-200 p-8 text-center">
                     <p className="text-base-content/60">No assets available for request</p>
                 </div>
             ) : (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {availableAssets.map((asset) => (
-                        <div key={asset._id} className="rounded-lg border border-base-300 bg-base-100 p-6 shadow">
-                            <div className="mb-4 h-48 overflow-hidden rounded-lg bg-base-200">
-                                <img
-                                    src={asset.image}
-                                    alt={asset.name}
-                                    className="h-full w-full object-cover"
-                                />
+                <>
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {assets.map((asset) => (
+                            <div key={asset._id} className="rounded-lg border border-base-300 bg-base-100 p-6 shadow">
+                                <div className="mb-4 h-48 overflow-hidden rounded-lg bg-base-200">
+                                    <img
+                                        src={asset.image}
+                                        alt={asset.name}
+                                        className="h-full w-full object-cover"
+                                    />
+                                </div>
+                                <h3 className="text-lg font-bold">{asset.name}</h3>
+                                <p className="mb-2 text-sm text-base-content/60">
+                                    <span className={`badge ${asset.type === 'returnable' ? 'badge-info' : 'badge-warning'}`}>
+                                        {asset.type}
+                                    </span>
+                                </p>
+                                <p className="mb-4 text-sm">
+                                    Available: <span className="font-semibold">{asset.quantity}</span>
+                                </p>
+                                <button
+                                    onClick={() => handleRequestClick(asset)}
+                                    className="btn btn-primary btn-sm w-full"
+                                >
+                                    Request
+                                </button>
                             </div>
-                            <h3 className="text-lg font-bold">{asset.name}</h3>
-                            <p className="mb-2 text-sm text-base-content/60">
-                                <span className={`badge ${asset.type === 'returnable' ? 'badge-info' : 'badge-warning'}`}>
-                                    {asset.type}
-                                </span>
-                            </p>
-                            <p className="mb-4 text-sm">
-                                Available: <span className="font-semibold">{asset.quantity}</span>
-                            </p>
-                            <button
-                                onClick={() => handleRequestClick(asset)}
-                                className="btn btn-primary btn-sm w-full"
-                            >
-                                Request
-                            </button>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                    <div className="flex justify-center mt-8 gap-2">
+                        <button
+                            className="btn btn-sm"
+                            disabled={page === 1}
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                        >
+                            Previous
+                        </button>
+                        <span className="btn btn-sm btn-ghost no-animation cursor-default">
+                            Page {page} of {totalPages}
+                        </span>
+                        <button
+                            className="btn btn-sm"
+                            disabled={page >= totalPages}
+                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        >
+                            Next
+                        </button>
+                    </div>
+                </>
             )}
 
             {showModal && selectedAsset && (
@@ -107,7 +135,7 @@ const RequestAsset = () => {
                     <div className="modal-box">
                         <h3 className="text-lg font-bold">Request Asset</h3>
                         <p className="py-4">Requesting: <span className="font-semibold">{selectedAsset.name}</span></p>
-                        
+
                         <textarea
                             className="textarea textarea-bordered w-full"
                             placeholder="Add a note (optional)"

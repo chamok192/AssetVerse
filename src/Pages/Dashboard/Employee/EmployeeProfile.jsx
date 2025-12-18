@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { auth } from "../../../FireBase/firebase.init";
-import { updateUser, getUserByEmail } from "../../../Services/api";
+import { updateUserProfile, getUserByEmail } from "../../../Services/api";
+import { uploadImageToImgBB } from "../../../Auth/authService";
 import EmployeeDashboardLayout from "./EmployeeDashboardLayout";
 
 const EmployeeProfile = () => {
@@ -17,6 +18,8 @@ const EmployeeProfile = () => {
         profileImage: "",
         dateOfBirth: ""
     });
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState("");
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -63,6 +66,27 @@ const EmployeeProfile = () => {
         setForm((prev) => ({ ...prev, [field]: value }));
     };
 
+    const handleImageChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                setError("Please select a valid image file");
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                setError("Image size should be less than 5MB");
+                return;
+            }
+            setImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+            setError("");
+        }
+    };
+
     const handleSave = async () => {
         try {
             setSaving(true);
@@ -73,11 +97,28 @@ const EmployeeProfile = () => {
                 return;
             }
 
-            const result = await updateUser(currentUser.uid, form);
+            let profileImageUrl = form.profileImage;
+            if (imageFile) {
+                const uploadRes = await uploadImageToImgBB(imageFile);
+                if (uploadRes.success) {
+                    profileImageUrl = uploadRes.url;
+                } else {
+                    setError("Failed to upload image");
+                    setSaving(false);
+                    return;
+                }
+            }
+
+            const updatedForm = { ...form, profileImage: profileImageUrl };
+            // backend 'updateUserProfile' uses token to identify user, so we don't need to pass ID
+            const result = await updateUserProfile(updatedForm);
             if (result.success) {
-                setProfile(form);
+                setProfile(updatedForm);
+                setForm(updatedForm);
+                setImageFile(null);
+                setImagePreview("");
                 setEditing(false);
-                localStorage.setItem("userData", JSON.stringify(form));
+                localStorage.setItem("userData", JSON.stringify(updatedForm));
             } else {
                 setError(result.error || "Failed to save profile");
             }
@@ -106,7 +147,7 @@ const EmployeeProfile = () => {
                         <div className="avatar">
                             <div className="w-24 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 bg-base-200">
                                 <img
-                                    src={form.profileImage || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23e0e0e0' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%23999' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E"}
+                                    src={imagePreview || form.profileImage || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23e0e0e0' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%23999' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E"}
                                     alt={form.name || "Profile"}
                                 />
                             </div>
@@ -150,6 +191,8 @@ const EmployeeProfile = () => {
                                             profileImage: profile.profileImage || "",
                                             dateOfBirth: profile.dateOfBirth || ""
                                         });
+                                        setImageFile(null);
+                                        setImagePreview("");
                                     }}
                                 >
                                     Cancel
@@ -209,16 +252,20 @@ const EmployeeProfile = () => {
 
                         <label className="form-control md:col-span-2">
                             <div className="label">
-                                <span className="label-text font-semibold">Profile Image URL</span>
+                                <span className="label-text font-semibold">Profile Image</span>
                             </div>
-                            <input
-                                type="url"
-                                className="input input-bordered"
-                                value={form.profileImage}
-                                onChange={(e) => handleChange("profileImage", e.target.value)}
-                                disabled={!editing}
-                                placeholder="https://i.ibb.co/..."
-                            />
+                            {editing ? (
+                                <input
+                                    type="file"
+                                    className="file-input file-input-bordered w-full"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                />
+                            ) : (
+                                <div className="text-sm text-base-content/60 px-4 py-3 bg-base-200 rounded-lg break-all">
+                                    {form.profileImage || "No image set"}
+                                </div>
+                            )}
                         </label>
                     </div>
                 </div>

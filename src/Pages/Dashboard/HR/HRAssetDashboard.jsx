@@ -16,17 +16,21 @@ const HRAssetDashboard = () => {
     const [sortKey, setSortKey] = useState("date-desc");
     const [deletingId, setDeletingId] = useState(null);
 
+    // Page state restored
     const [page, setPage] = useState(1);
     const limit = 10;
 
     // Fetch assets using TanStack Query
-    const { data: queryData = { data: [], totalPages: 1 }, isLoading } = useQuery({
-        queryKey: ['assets', { page, limit, search, typeFilter }],
+    const { data: queryData = { data: [], totalPages: 1, totalAssets: 0, totalQuantity: 0, lowStock: 0 }, isLoading } = useQuery({
+        queryKey: ['assets', { page, limit, search, typeFilter, categoryFilter }],
         queryFn: async () => {
             const result = await getAssets(page, limit, search, typeFilter);
             return {
                 data: result.data || [],
-                totalPages: result.totalPages || 1
+                totalPages: result.totalPages || 1,
+                totalAssets: result.totalAssets || 0,
+                totalQuantity: result.totalQuantity || 0,
+                lowStock: result.lowStock || 0
             };
         },
         keepPreviousData: true
@@ -77,10 +81,12 @@ const HRAssetDashboard = () => {
     }, [assets, sortKey, categoryFilter]);
 
     const totals = useMemo(() => {
-        const totalQuantity = assets.reduce((sum, item) => sum + (Number(item.productQuantity || item.quantity) || 0), 0);
-        const lowStock = assets.filter((item) => (Number(item.productQuantity || item.quantity) || 0) <= 5).length;
-        return { totalQuantity, lowStock, count: assets.length };
-    }, [assets]);
+        return {
+            totalQuantity: queryData.totalQuantity || 0,
+            lowStock: queryData.lowStock || 0,
+            count: queryData.totalAssets || 0
+        };
+    }, [queryData]);
 
     const handleDelete = async (assetId) => {
         setDeletingId(assetId);
@@ -312,6 +318,7 @@ const HRAssetDashboard = () => {
                     </tbody>
                 </table>
             </div>
+
 
             <div className="flex justify-center mt-6">
                 <div className="join">

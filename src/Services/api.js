@@ -1,4 +1,3 @@
-export const deletePayment = (id) => handler(() => api.delete(`/api/payments/${id}`), 'Failed to delete payment');
 import axios from 'axios';
 
 const api = axios.create({
@@ -23,7 +22,11 @@ api.interceptors.response.use(r => r, e => {
 const handler = async (fn, fallback) => {
     try {
         const res = await fn();
-        return { success: true, data: res.data?.data || res.data };
+        const payload = res.data;
+        if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+            return { success: true, ...payload };
+        }
+        return { success: true, data: payload };
     } catch (e) {
         return { success: false, error: e.response?.data?.message || e.response?.data?.error || fallback };
     }
@@ -44,7 +47,7 @@ export const createUser = (data) => handler(() => api.post('/api/users', data), 
 export const getUserByEmail = (email) => handler(() => api.get(`/api/users/email/${email}`), 'User not found');
 export const updateUser = (id, data) => handler(() => api.put(`/api/users/${id}`, data), 'Failed to update user');
 export const updateUserProfile = (data) => handler(() => api.patch('/api/users/profile', data), 'Failed to update profile');
-export const getAssets = (page = 1, limit = 10, search = '', filter = 'all') => handler(() => api.get(`/api/assets?page=${page}&limit=${limit}&search=${search}&filter=${filter}`), 'Failed to fetch assets');
+export const getAssets = (page = 1, limit = 10, search = '', filter = 'all', stockStatus = '') => handler(() => api.get(`/api/assets?page=${page}&limit=${limit}&search=${search}&filter=${filter}&quantity=${stockStatus}`), 'Failed to fetch assets');
 export const createAsset = (data) => {
     const user = getUserData();
     return handler(() => api.post('/api/assets', { ...data, hrEmail: user?.email || '' }), 'Failed to create asset');
@@ -64,8 +67,10 @@ export const removeEmployee = (id) => handler(() => api.delete(`/api/employees/$
 export const getPaymentHistory = () => handler(() => api.get('/api/payments/history'), 'Failed to fetch history');
 export const createPaymentIntent = (data) => handler(() => api.post('/api/payments/create-checkout', data), 'Failed to create checkout session');
 export const confirmPayment = (data) => handler(() => api.post('/api/payments/confirm', data), 'Failed to confirm payment');
+export const deletePayment = (id) => handler(() => api.delete(`/api/payments/${id}`), 'Failed to delete payment');
 export const verifyPaymentSession = (sessionId) => handler(() => api.get(`/api/payments/session/${sessionId}`), 'Failed to verify session');
 export const getEmployeeAssets = () => handler(() => api.get('/api/employee-assets'), 'Failed to fetch employee assets');
+export const getMyTeam = () => handler(() => api.get('/api/my-team'), 'Failed to fetch team members');
 export const createRequest = (data) => handler(() => api.post('/api/requests', data), 'Failed to create request');
 export const updateRequest = (id, data) => handler(() => api.patch(`/api/requests/${id}`, data), 'Failed to update request');
 export const getPackages = () => handler(() => api.get('/api/packages'), 'Failed to fetch packages');

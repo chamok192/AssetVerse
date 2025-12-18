@@ -6,16 +6,22 @@ import { useNavigate } from 'react-router';
 const EmployeeDashboard = () => {
     const navigate = useNavigate();
 
-    const { data: assets = [], isLoading } = useQuery({
+    const { data: queryData = { data: [], totalAssets: 0, availableCount: 0 }, isLoading } = useQuery({
         queryKey: ['assets'],
         queryFn: async () => {
             const result = await getAssets();
-            return result.success ? (Array.isArray(result.data) ? result.data : []) : [];
+            return {
+                data: result.data || [],
+                totalAssets: result.totalAssets || 0,
+                availableCount: result.availableCount || 0
+            };
         }
     });
 
-    const availableAssets = assets.filter(asset => asset.quantity > 0);
-    const totalAssets = assets.length;
+    const assets = queryData.data;
+    const totalAssets = queryData.totalAssets;
+    const availableCount = queryData.availableCount;
+    const availableAssetsPreview = assets.filter(asset => asset.quantity > 0);
 
     if (isLoading) {
         return (
@@ -30,7 +36,6 @@ const EmployeeDashboard = () => {
     return (
         <EmployeeDashboardLayout title="Dashboard" subtitle="Welcome to your asset management dashboard">
             <div className="space-y-6">
-                {/* Stats Cards */}
                 <div className="grid gap-4 md:grid-cols-3">
                     <div className="rounded-xl border border-base-200 bg-base-100 p-4 shadow-sm">
                         <p className="text-sm text-base-content/70">Total Assets</p>
@@ -38,11 +43,11 @@ const EmployeeDashboard = () => {
                     </div>
                     <div className="rounded-xl border border-base-200 bg-base-100 p-4 shadow-sm">
                         <p className="text-sm text-base-content/70">Available Assets</p>
-                        <p className="text-3xl font-bold text-success">{availableAssets.length}</p>
+                        <p className="text-3xl font-bold text-success">{availableCount}</p>
                     </div>
                     <div className="rounded-xl border border-base-200 bg-base-100 p-4 shadow-sm">
                         <p className="text-sm text-base-content/70">Out of Stock</p>
-                        <p className="text-3xl font-bold text-warning">{totalAssets - availableAssets.length}</p>
+                        <p className="text-3xl font-bold text-warning">{totalAssets - availableCount}</p>
                     </div>
                 </div>
 
@@ -93,13 +98,13 @@ const EmployeeDashboard = () => {
                             View All
                         </button>
                     </div>
-                    {availableAssets.length === 0 ? (
+                    {availableAssetsPreview.length === 0 ? (
                         <div className="text-center py-8 text-base-content/60">
                             <p>No assets available at the moment</p>
                         </div>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {availableAssets.slice(0, 6).map((asset) => (
+                            {availableAssetsPreview.slice(0, 6).map((asset) => (
                                 <div key={asset._id} className="rounded-lg border border-base-300 p-4">
                                     <div className="mb-3 h-32 overflow-hidden rounded-lg bg-base-200">
                                         <img
