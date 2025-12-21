@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getEmployeeAssets, api } from '../../../Services/api';
+import { getEmployeeAssets, deleteEmployeeAsset, api } from '../../../Services/api';
 import EmployeeDashboardLayout from './EmployeeDashboardLayout';
 import { toast } from 'react-toastify';
 
@@ -28,6 +28,17 @@ const EmployeeAssets = () => {
             refetch();
         } catch (err) {
             toast.error('Failed to return asset: ' + (err?.response?.data?.error || 'Unknown error'));
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!confirm('Are you sure you want to delete this asset assignment?')) return;
+        try {
+            await deleteEmployeeAsset(id);
+            toast.success('Asset deleted successfully!');
+            refetch();
+        } catch (err) {
+            toast.error('Failed to delete asset: ' + (err?.response?.data?.error || 'Unknown error'));
         }
     };
 
@@ -81,30 +92,40 @@ const EmployeeAssets = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {assets.length ? (
-                                assets.map(asset => (
+                            {assets.map(asset => {
+                                // Handle schema
+                                const assetName = asset.assetName || asset.name || asset.productName || 'Unknown Asset';
+                                const assetImage = asset.assetImage || asset.image || asset.productImage || 'https://via.placeholder.com/40';
+                                const assetType = asset.assetType || asset.type || asset.productType || 'Unknown';
+                                const companyName = asset.companyName || 'Unknown Company';
+                                const assignmentDate = asset.assignmentDate || asset.approvalDate || asset.requestDate;
+                                const status = asset.status || 'assigned';
+
+                                const isReturnable = assetType === 'Returnable' || assetType === 'returnable';
+
+                                return (
                                     <tr key={asset._id} className="hover">
                                         <td>
                                             <img
-                                                src={asset.assetImage}
-                                                alt={asset.assetName}
+                                                src={assetImage}
+                                                alt={assetName}
                                                 className="h-10 w-10 rounded object-cover"
+                                                onError={(e) => { e.target.src = 'https://via.placeholder.com/40?text=No+Image'; }}
                                             />
                                         </td>
-                                        <td className="font-medium">{asset.assetName}</td>
-                                        <td className="capitalize">{asset.assetType}</td>
-                                        <td>{asset.companyName}</td>
-                                        <td>{new Date(asset.requestDate).toLocaleDateString()}</td>
-                                        <td>{new Date(asset.approvalDate).toLocaleDateString()}</td>
+                                        <td className="font-medium">{assetName}</td>
+                                        <td className="capitalize">{assetType}</td>
+                                        <td>{companyName}</td>
+                                        <td>{assignmentDate ? new Date(assignmentDate).toLocaleDateString() : 'N/A'}</td>
+                                        <td>{assignmentDate ? new Date(assignmentDate).toLocaleDateString() : 'N/A'}</td>
                                         <td>
-                                            <span className={`badge ${
-                                                asset.status === 'Approved' ? 'badge-success' : 'badge-warning'
-                                            }`}>
-                                                {asset.status}
+                                            <span className={`badge ${status === 'assigned' ? 'badge-success' : 'badge-neutral'
+                                                }`}>
+                                                {status === 'assigned' ? 'Approved' : status}
                                             </span>
                                         </td>
                                         <td>
-                                            {asset.canReturn && (
+                                            {isReturnable && status === 'assigned' && (
                                                 <button
                                                     onClick={() => handleReturn(asset._id)}
                                                     className="btn btn-sm btn-error"
@@ -112,10 +133,17 @@ const EmployeeAssets = () => {
                                                     Return
                                                 </button>
                                             )}
+                                            <button
+                                                onClick={() => handleDelete(asset._id)}
+                                                className="btn btn-sm btn-outline btn-error ml-2"
+                                            >
+                                                Delete
+                                            </button>
                                         </td>
                                     </tr>
-                                ))
-                            ) : (
+                                );
+                            })}
+                            {assets.length === 0 && (
                                 <tr>
                                     <td colSpan="8" className="text-center py-8">
                                         No assets found

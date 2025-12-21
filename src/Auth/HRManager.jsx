@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { registerHRManager, getFieldError, uploadImageToImgBB } from './authService';
 import { useNavigate } from 'react-router-dom';
 
-const init = { name: '', profileImage: '', companyName: '', companyLogo: '', email: '', password: '', dateOfBirth: '', role: 'HR', packageLimit: 5, currentEmployees: 0, subscription: 'free' };
+const init = { name: '', profileImage: '', companyName: '', companyLogo: '', email: '', password: '', dateOfBirth: '', role: 'HR', packageLimit: 3, currentEmployees: 0, subscription: 'free' };
 
 const Input = ({ name, type = 'text', placeholder, label, value, onChange, onBlur, error }) => {
     const [showPassword, setShowPassword] = useState(false);

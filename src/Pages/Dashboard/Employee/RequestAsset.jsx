@@ -81,32 +81,39 @@ const RequestAsset = () => {
             ) : (
                 <>
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {assets.map((asset) => (
-                            <div key={asset._id} className="rounded-lg border border-base-300 bg-base-100 p-6 shadow">
-                                <div className="mb-4 h-48 overflow-hidden rounded-lg bg-base-200">
-                                    <img
-                                        src={asset.image}
-                                        alt={asset.name}
-                                        className="h-full w-full object-cover"
-                                    />
+                        {assets.map((asset) => {
+                            const assetName = asset.productName || asset.name || "Untitled";
+                            const assetImage = asset.productImage || asset.image || "";
+                            const assetType = asset.productType || asset.type || "Returnable";
+                            const availableQty = asset.availableQuantity ?? asset.quantity ?? 0;
+
+                            return (
+                                <div key={asset._id} className="rounded-lg border border-base-300 bg-base-100 p-6 shadow">
+                                    <div className="mb-4 h-48 overflow-hidden rounded-lg bg-base-200">
+                                        <img
+                                            src={assetImage}
+                                            alt={assetName}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    </div>
+                                    <h3 className="text-lg font-bold">{assetName}</h3>
+                                    <p className="mb-2 text-sm text-base-content/60">
+                                        <span className={`badge ${assetType.toLowerCase() === 'returnable' ? 'badge-info' : 'badge-warning'}`}>
+                                            {assetType}
+                                        </span>
+                                    </p>
+                                    <p className="mb-4 text-sm">
+                                        Available: <span className="font-semibold">{availableQty}</span>
+                                    </p>
+                                    <button
+                                        onClick={() => handleRequestClick(asset)}
+                                        className="btn btn-primary btn-sm w-full"
+                                    >
+                                        Request
+                                    </button>
                                 </div>
-                                <h3 className="text-lg font-bold">{asset.name}</h3>
-                                <p className="mb-2 text-sm text-base-content/60">
-                                    <span className={`badge ${asset.type === 'returnable' ? 'badge-info' : 'badge-warning'}`}>
-                                        {asset.type}
-                                    </span>
-                                </p>
-                                <p className="mb-4 text-sm">
-                                    Available: <span className="font-semibold">{asset.quantity}</span>
-                                </p>
-                                <button
-                                    onClick={() => handleRequestClick(asset)}
-                                    className="btn btn-primary btn-sm w-full"
-                                >
-                                    Request
-                                </button>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     <div className="flex justify-center mt-8 gap-2">
                         <button
@@ -134,7 +141,7 @@ const RequestAsset = () => {
                 <div className="modal modal-open">
                     <div className="modal-box">
                         <h3 className="text-lg font-bold">Request Asset</h3>
-                        <p className="py-4">Requesting: <span className="font-semibold">{selectedAsset.name}</span></p>
+                        <p className="py-4">Requesting: <span className="font-semibold">{selectedAsset.productName || selectedAsset.name}</span></p>
 
                         <textarea
                             className="textarea textarea-bordered w-full"

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getUserByEmail, getPackages } from "../../../Services/api";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getPackages } from "../../../Services/api";
 import { useAuth } from "../../../Contents/AuthContext/useAuth.js";
 import PaymentModal from "../../../Components/PaymentModal";
 import DashboardLayout from "./DashboardLayout";
@@ -8,9 +8,7 @@ import DashboardLayout from "./DashboardLayout";
 const UpgradePackage = () => {
     const [selectedPackage, setSelectedPackage] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { user, load, refetchProfile } = useAuth();
-    const userData = user;
-    const queryClient = useQueryClient();
+    const { user, load } = useAuth();
 
     // Fetch packages from database
     const { data: packages = [], isLoading: packagesLoading } = useQuery({
@@ -21,20 +19,11 @@ const UpgradePackage = () => {
         }
     });
 
-    const currentSubscription = (userData?.subscription || 'free').toLowerCase();
+    const currentSubscription = (user?.subscription || 'free').toLowerCase();
 
     const openPaymentModal = (pkg) => {
         setSelectedPackage(pkg);
         setIsModalOpen(true);
-    };
-
-    const handlePaymentSuccess = () => {
-        setIsModalOpen(false);
-        setSelectedPackage(null);
-        // Refetch user profile to update subscription
-        refetchProfile();
-        // Invalidate queries
-        queryClient.invalidateQueries({ queryKey: ['employee-limit'] });
     };
 
     if (load || packagesLoading) {
@@ -129,7 +118,6 @@ const UpgradePackage = () => {
                     }}
                     package={selectedPackage}
                     userEmail={user?.email}
-                    onSuccess={handlePaymentSuccess}
                 />
             )}
         </DashboardLayout>

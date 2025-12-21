@@ -49,17 +49,6 @@ const saveUser = (user) => {
     window.dispatchEvent(new Event('storage'));
 };
 
-const fetchUserData = async (email, token) => {
-    try {
-        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-        const res = await axios.get(`${apiBase}/api/users/email/${email}`, config);
-        const userData = res.data?.success ? res.data.data : (res.data?.data || res.data);
-        return userData || null;
-    } catch {
-        return null;
-    }
-};
-
 export const loginWithEmail = async (email, password) => {
     try {
         const { user: fbUser } = await signInWithEmailAndPassword(auth, email, password);
@@ -128,6 +117,15 @@ const registerUser = async (data, role, extraFields = {}) => {
             throw new Error('Failed to save user to database');
         }
 
+        // Get JWT token from backend after successful registration
+        const tokenRes = await axios.post(`${apiBase}/api/auth/login`, { email: data.email, uid: fbUser.uid }).catch(() => ({}));
+        const token = tokenRes.data?.token;
+
+        if (token) {
+            localStorage.setItem('token', token);
+            sessionStorage.setItem('token', token);
+        }
+
         saveUser(userData);
         return { success: true, user: fbUser, userData };
     } catch (e) {
@@ -143,9 +141,9 @@ export const registerHRManager = async (data) => {
     const extraFields = {
         companyName: data.companyName || '',
         companyLogo: data.companyLogo || '',
-        packageLimit: parseInt(data.packageLimit) || 5,
+        packageLimit: parseInt(data.packageLimit) || 3,
         currentEmployees: 0,
-        subscription: data.subscription || 'basic'
+        subscription: data.subscription || 'free'
     };
     return registerUser(data, 'HR', extraFields);
 };

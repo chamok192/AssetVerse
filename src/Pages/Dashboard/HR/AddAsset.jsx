@@ -38,7 +38,7 @@ const AddAsset = () => {
         staleTime: Infinity
     });
 
-    // Load asset data into form when data is fetched
+    // Load form data
     useEffect(() => {
         if (!assetData || !isEdit) return;
         
@@ -55,7 +55,7 @@ const AddAsset = () => {
         handler();
     }, [assetData, isEdit]);
 
-    // Mutation for creating asset
+    // Create asset mutation
     const createMutation = useMutation({
         mutationFn: createAsset,
         onSuccess: () => {
@@ -67,7 +67,7 @@ const AddAsset = () => {
         }
     });
 
-    // Mutation for updating asset
+    // Update asset mutation
     const updateMutation = useMutation({
         mutationFn: (payload) => updateAsset(assetId, payload),
         onSuccess: () => {
@@ -87,13 +87,11 @@ const AddAsset = () => {
     const handleImageChange = (e) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Validate file type
             if (!file.type.startsWith('image/')) {
                 setError("Please select a valid image file");
                 return;
             }
             
-            // Validate file size (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
                 setError("Image size should be less than 5MB");
                 return;
@@ -101,7 +99,7 @@ const AddAsset = () => {
 
             setImageFile(file);
             
-            // Create preview
+            // Set preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result);
@@ -115,7 +113,7 @@ const AddAsset = () => {
         e.preventDefault();
         setError("");
 
-        // Validate required fields
+        // Check required fields
         if (!form.name.trim()) {
             setError("Asset name is required");
             return;
@@ -129,14 +127,13 @@ const AddAsset = () => {
             return;
         }
 
-        // Image is required
         let imageUrl = form.image.trim();
         if (!imageFile && !imageUrl) {
             setError("Asset image is required");
             return;
         }
 
-        // Upload image to ImgBB if a new file is selected
+        // Upload image if new
         if (imageFile) {
             const uploadResult = await uploadImageToImgBB(imageFile);
             if (!uploadResult.success) {

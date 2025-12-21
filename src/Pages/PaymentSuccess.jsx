@@ -13,10 +13,9 @@ const PaymentSuccess = () => {
     }
 
     
-    // The webhook will update the database in the background
     setTimeout(() => {
         navigate('/dashboard/payment-success');
-      // Reload to fetch updated user data from backend
+      
       setTimeout(() => window.location.reload(), 300);
     }, 2000);
   }, [searchParams, navigate]);

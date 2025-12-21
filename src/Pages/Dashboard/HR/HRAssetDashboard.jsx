@@ -43,7 +43,7 @@ const HRAssetDashboard = () => {
         keepPreviousData: true
     });
 
-    const { data: analyticsData = { typeDistribution: [], topRequests: [] }, isLoading: isAnalyticsLoading } = useQuery({
+    const { data: analyticsData = { typeDistribution: [], topRequests: [] } } = useQuery({
         queryKey: ['hr-analytics'],
         queryFn: async () => {
             const result = await getHRAnalytics();

@@ -10,26 +10,19 @@ const empMenu = [{ label: 'Dashboard', to: '/employee/dashboard' }, { label: 'My
 const hrMenu = [{ label: 'Dashboard', to: '/hr/assets' }, { label: 'Asset List', to: '/hr/assets' }, { label: 'Add Asset', to: '/hr/assets/new' }, { label: 'All Requests', to: '/hr/requests' }, { label: 'Upgrade Package', to: '/hr/upgrade' }, { label: 'Employee List', to: '/hr/employees' }, { label: 'Profile', to: '/profile' }, { label: 'Logout', action: 'logout' }];
 
 const Nav = () => {
-    const { user, load } = useAuth();
-    const [pricing, setPricing] = useState(false);
+    const { user } = useAuth();
     const [mobile, setMobile] = useState(false);
     const [profile, setProfile] = useState(false);
     const location = useLocation();
 
-    useEffect(() => {
-        const handle = () => {
-            const el = document.querySelector('#pricing');
-            if (el) setPricing(el.getBoundingClientRect().top < window.innerHeight && el.getBoundingClientRect().bottom > 0);
-        };
-        window.addEventListener('scroll', handle);
-        return () => window.removeEventListener('scroll', handle);
-    }, []);
-
-    useEffect(() => { setMobile(false); setProfile(false); }, [location.pathname]);
+    useEffect(() => { 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMobile(false); setProfile(false); 
+    }, [location.pathname]);
 
     const close = () => { setMobile(false); setProfile(false); };
     const menu = user?.role?.toLowerCase() === 'hr' ? hrMenu : empMenu;
-    const linkClass = ({ isActive }) => isActive && !pricing ? 'active text-base-content font-semibold' : 'text-base-content/70';
+    const linkClass = ({ isActive }) => isActive ? 'active text-base-content font-semibold' : 'text-base-content/70';
     const scroll = (h) => { const el = document.querySelector(h); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 
     const Item = ({ item }) => (
@@ -56,7 +49,7 @@ const Nav = () => {
                 <ul className="menu menu-horizontal px-1 gap-2">
                     {publicLinks.map(i => (
                         <li key={i.label}>
-                            {i.isHash ? <a href={i.to} onClick={e => { e.preventDefault(); scroll(i.to.substring(1)); }} className={pricing ? 'text-base-content/70' : 'text-base-content/70 hover:text-base-content'}>{i.label}</a> : <NavLink to={i.to} className={linkClass}>{i.label}</NavLink>}
+                            {i.isHash ? <a href={i.to} onClick={e => { e.preventDefault(); scroll(i.to.substring(1)); }} className="text-base-content/70 hover:text-base-content">{i.label}</a> : <NavLink to={i.to} className={linkClass}>{i.label}</NavLink>}
                         </li>
                     ))}
                 </ul>

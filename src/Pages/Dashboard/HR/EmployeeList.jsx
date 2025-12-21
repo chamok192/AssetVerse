@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getEmployees, removeEmployee, getUserByEmail } from "../../../Services/api";
+import { getEmployees, removeEmployee, getAssets, assignAssetManual } from "../../../Services/api";
 import DashboardLayout from "./DashboardLayout";
 import { toast } from 'react-toastify';
 import { useAuth } from "../../../Contents/AuthContext/useAuth";
@@ -10,15 +10,16 @@ const EmployeeList = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const [removingId, setRemovingId] = useState(null);
+    const [assigningTo, setAssigningTo] = useState(null);
+    const [selectedAssetId, setSelectedAssetId] = useState('');
     const { user: hrProfile, load } = useAuth();
 
-    const limit = hrProfile?.packageLimit || 5;
+    const limit = hrProfile?.packageLimit || 3;
     const currentCount = hrProfile?.currentEmployees || 0;
     const isLimitReached = currentCount >= limit;
 
     const [page, setPage] = useState(1);
     const pageLimit = 10;
-
 
     const { data: queryData = { data: [], totalPages: 1 }, isLoading } = useQuery({
         queryKey: ['employees', page],
@@ -45,6 +46,37 @@ const EmployeeList = () => {
         },
         onError: (error) => toast.error(error.message || 'Failed to remove employee')
     });
+
+    const assignMutation = useMutation({
+        mutationFn: ({ assetId, email }) => assignAssetManual(assetId, email),
+        onSuccess: (res) => {
+            if (res.success) {
+                toast.success('Asset assigned successfully!');
+                queryClient.invalidateQueries({ queryKey: ['employees'] });
+                queryClient.invalidateQueries({ queryKey: ['assets'] });
+                setAssigningTo(null);
+                setSelectedAssetId('');
+            } else {
+                toast.error(res.error || 'Failed to assign asset');
+            }
+        },
+        onError: (err) => toast.error(err.message || 'Failed to assign asset')
+    });
+
+    // Fetch all assets that are in stock
+    const { data: availableAssets = [] } = useQuery({
+        queryKey: ['available-assets'],
+        queryFn: async () => {
+            const res = await getAssets(1, 100, '', 'all', 'available');
+            return res.data || [];
+        },
+        enabled: !!assigningTo
+    });
+
+    const handleAssign = () => {
+        if (!selectedAssetId || !assigningTo) return;
+        assignMutation.mutate({ assetId: selectedAssetId, email: assigningTo.email });
+    };
 
     const handleRemove = (employeeId) => {
         const confirmed = window.confirm("Remove this employee from the team?");
@@ -121,16 +153,23 @@ const EmployeeList = () => {
                                 </td>
                                 <td className="font-semibold">{employee.name || "Unknown"}</td>
                                 <td>{employee.email || "-"}</td>
-                                <td>{employee.createdAt ? new Date(employee.createdAt).toLocaleDateString() : "-"}</td>
+                                <td>{employee.affiliationDate ? new Date(employee.affiliationDate).toLocaleDateString() : "-"}</td>
                                 <td>{employee.assetsCount ?? employee.assets?.length ?? 0}</td>
-                                <td className="text-right">
+                                <td className="text-right flex gap-2 justify-end">
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-primary btn-outline"
+                                        onClick={() => setAssigningTo(employee)}
+                                    >
+                                        Assign Asset
+                                    </button>
                                     <button
                                         type="button"
                                         className="btn btn-sm btn-outline btn-error"
                                         onClick={() => handleRemove(employee._id)}
                                         disabled={removingId === employee._id || removeEmployeeMutation.isPending}
                                     >
-                                        {removingId === employee._id || removeEmployeeMutation.isPending ? "Removing..." : "Remove from Team"}
+                                        {removingId === employee._id || removeEmployeeMutation.isPending ? "Removing..." : "Remove"}
                                     </button>
                                 </td>
                             </tr>
@@ -139,6 +178,7 @@ const EmployeeList = () => {
                 </table>
             </div>
 
+            {/* Pagination ... */}
             <div className="flex justify-center mt-6">
                 <div className="join">
                     <button
@@ -158,6 +198,63 @@ const EmployeeList = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Assignment Modal */}
+            {assigningTo && (
+                <div className="modal modal-open">
+                    <div className="modal-box max-w-lg">
+                        <h3 className="text-lg font-bold">Assign Asset to {assigningTo.name}</h3>
+                        <p className="py-4 text-sm text-base-content/70">
+                            Select an available asset from your inventory to assign directly to this employee.
+                        </p>
+
+                        <div className="form-control w-full">
+                            <label className="label">
+                                <span className="label-text">Select Asset</span>
+                            </label>
+                            <select
+                                className="select select-bordered w-full"
+                                value={selectedAssetId}
+                                onChange={(e) => setSelectedAssetId(e.target.value)}
+                            >
+                                <option value="">-- Choose an asset --</option>
+                                {availableAssets.map(asset => {
+                                    const assetName = asset.productName || asset.name || "Untitled";
+                                    const availableQty = asset.availableQuantity ?? asset.quantity ?? 0;
+                                    return (
+                                        <option key={asset._id} value={asset._id}>
+                                            {assetName} (Qty: {availableQty})
+                                        </option>
+                                    );
+                                })}
+                            </select>
+                            {availableAssets.length === 0 && (
+                                <p className="mt-2 text-xs text-error">No available assets in stock.</p>
+                            )}
+                        </div>
+
+                        <div className="modal-action">
+                            <button
+                                className="btn"
+                                onClick={() => {
+                                    setAssigningTo(null);
+                                    setSelectedAssetId('');
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="btn btn-primary"
+                                onClick={handleAssign}
+                                disabled={!selectedAssetId || assignMutation.isPending}
+                            >
+                                {assignMutation.isPending ? "Assigning..." : "Assign Asset"}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop" onClick={() => setAssigningTo(null)}></div>
+                </div>
+            )}
         </DashboardLayout>
     );
 };

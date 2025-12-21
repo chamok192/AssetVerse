@@ -1,15 +1,10 @@
 import { useState } from 'react';
 import PaymentForm from './PaymentForm';
 
-const PaymentModal = ({ isOpen, onClose, package: pkg, userEmail, onSuccess }) => {
+const PaymentModal = ({ isOpen, onClose, package: pkg, userEmail }) => {
   const [step, setStep] = useState('confirm');
 
   if (!isOpen) return null;
-
-  const handleSuccess = () => {
-    onSuccess();
-    setTimeout(() => setStep('confirm'), 500);
-  };
 
   return (
     <div className="modal modal-open">
@@ -70,7 +65,6 @@ const PaymentModal = ({ isOpen, onClose, package: pkg, userEmail, onSuccess }) =
                 amount: pkg.price,
                 email: userEmail
               }}
-              onSuccess={handleSuccess}
               isLoading={false}
             />
             <button

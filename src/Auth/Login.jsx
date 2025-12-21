@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginWithEmail, getFieldError, validatePassword } from './authService';
+import { useAuth } from '../Contents/AuthContext/useAuth';
 
 const Input = ({ name, type, placeholder, label, value, onChange }) => {
     const [showPassword, setShowPassword] = useState(false);
@@ -11,15 +12,15 @@ const Input = ({ name, type, placeholder, label, value, onChange }) => {
         <label className="form-control w-full">
             <div className="label"><span className="label-text">{label}</span></div>
             <div className="relative">
-                <input 
-                    name={name} 
-                    value={value} 
+                <input
+                    name={name}
+                    value={value}
                     onChange={onChange}
-                    type={inputType} 
-                    placeholder={placeholder} 
-                    className={`input input-bordered w-full pr-10 ${getFieldError(name) ? 'input-error' : ''}`} 
-                    required 
-                    minLength={name === 'password' ? 6 : undefined} 
+                    type={inputType}
+                    placeholder={placeholder}
+                    className={`input input-bordered w-full pr-10 ${getFieldError(name) ? 'input-error' : ''}`}
+                    required
+                    minLength={name === 'password' ? 6 : undefined}
                 />
                 {isPassword && (
                     <button
@@ -47,6 +48,7 @@ const Input = ({ name, type, placeholder, label, value, onChange }) => {
 
 const Login = () => {
     const nav = useNavigate();
+    const { refetchProfile } = useAuth();
     const [form, setForm] = useState({ email: '', password: '' });
     const [err, setErr] = useState('');
     const [suc, setSuc] = useState('');
@@ -68,17 +70,18 @@ const Login = () => {
         setSuc('');
 
         const res = await loginWithEmail(form.email, form.password);
-        if (!res.success) { 
-            setErr(res.error); 
-            setLoad(false); 
-            return; 
+        if (!res.success) {
+            setErr(res.error);
+            setLoad(false);
+            return;
         }
 
         const data = res.userData;
 
-        
+
         localStorage.setItem('userData', JSON.stringify(data));
         window.dispatchEvent(new Event('storage'));
+        await refetchProfile();
 
         setSuc('Login successful! Redirecting...');
         const role = (data.role || '').toLowerCase();

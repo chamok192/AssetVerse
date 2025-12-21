@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { createPaymentIntent } from '../Services/api';
 
-const PaymentForm = ({ packageData, onSuccess, isLoading }) => {
+const PaymentForm = ({ packageData, isLoading }) => {
   const [cardError, setCardError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -10,7 +10,7 @@ const PaymentForm = ({ packageData, onSuccess, isLoading }) => {
     mutationFn: createPaymentIntent,
     onSuccess: (result) => {
       if (result.success && result.data?.url) {
-        // Redirect to Stripe Checkout hosted page
+        // Redirect to Stripe
         window.location.href = result.data.url;
       } else {
         setCardError(result.error || 'Failed to create checkout session');

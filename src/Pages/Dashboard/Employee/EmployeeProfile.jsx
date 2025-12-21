@@ -160,6 +160,27 @@ const EmployeeProfile = () => {
                             </div>
                         </div>
                     </div>
+
+                    {profile?.affiliations?.length > 0 && (
+                        <div className="mt-6 w-full">
+                            <h4 className="text-sm font-bold mb-2 text-base-content/70">Affiliated Companies</h4>
+                            <div className="space-y-2">
+                                {profile.affiliations.map((aff) => (
+                                    <div key={aff._id} className="flex items-center gap-3 p-2 rounded-lg bg-base-200 border border-base-300">
+                                        <div className="avatar">
+                                            <div className="w-8 h-8 rounded bg-base-300">
+                                                {aff.companyLogo && <img src={aff.companyLogo} alt={aff.companyName} />}
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 overflow-hidden">
+                                            <p className="text-xs font-bold truncate">{aff.companyName}</p>
+                                            <p className="text-[10px] text-base-content/50">Joined: {new Date(aff.affiliationDate).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="rounded-2xl bg-base-100 p-6 shadow lg:col-span-2">

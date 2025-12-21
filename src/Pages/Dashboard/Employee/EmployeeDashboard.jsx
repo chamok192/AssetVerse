@@ -2,32 +2,64 @@ import { useQuery } from '@tanstack/react-query';
 import { getAssets } from '../../../Services/api';
 import EmployeeDashboardLayout from './EmployeeDashboardLayout';
 import { useNavigate } from 'react-router';
+import { useAuth } from '../../../Contents/AuthContext/useAuth';
 
 const EmployeeDashboard = () => {
     const navigate = useNavigate();
 
+    const { user: authUser, load: authLoading } = useAuth();
+
     const { data: queryData = { data: [], totalAssets: 0, availableCount: 0 }, isLoading } = useQuery({
-        queryKey: ['assets'],
+        queryKey: ['assets', authUser?.email],
         queryFn: async () => {
-            const result = await getAssets();
+            const result = await getAssets(1, 100); // Fetch more for preview
             return {
                 data: result.data || [],
                 totalAssets: result.totalAssets || 0,
                 availableCount: result.availableCount || 0
             };
-        }
+        },
+        enabled: !authLoading
     });
 
     const assets = queryData.data;
     const totalAssets = queryData.totalAssets;
     const availableCount = queryData.availableCount;
-    const availableAssetsPreview = assets.filter(asset => asset.quantity > 0);
+    const availableAssetsPreview = assets.filter(asset => (asset.availableQuantity ?? asset.quantity ?? 0) > 0);
 
-    if (isLoading) {
+    // Check profile sync
+    const isProfileSynced = authUser && !!authUser.role && (
+        authUser.role !== 'Employee' ||
+        authUser.affiliations !== undefined
+    );
+    const isAffiliated = authUser?.affiliations && authUser.affiliations.length > 0;
+
+    if (isLoading || authLoading || !isProfileSynced) {
         return (
             <EmployeeDashboardLayout title="Dashboard" subtitle="Welcome to your asset management dashboard">
                 <div className="flex items-center justify-center py-12">
                     <span className="loading loading-spinner loading-lg"></span>
+                </div>
+            </EmployeeDashboardLayout>
+        );
+    }
+
+    if (!isAffiliated) {
+        return (
+            <EmployeeDashboardLayout title="Dashboard" subtitle="Affiliation required">
+                <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl bg-base-100 p-8 text-center shadow">
+                    <div className="mb-6 rounded-full bg-warning/10 p-6 text-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h2 className="mb-2 text-2xl font-bold">No Company Affiliation</h2>
+                    <p className="max-w-md text-base-content/60 mb-6">
+                        You currently don't belong to any company. To access your dashboard, please request an asset or contact your HR Manager to add you to their team.
+                    </p>
+                    <button onClick={() => navigate('/employee/request')} className="btn btn-primary">
+                        Browse Assets & Request
+                    </button>
                 </div>
             </EmployeeDashboardLayout>
         );
@@ -51,43 +83,6 @@ const EmployeeDashboard = () => {
                     </div>
                 </div>
 
-                {/* Quick Actions */}
-                {/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <button
-                        onClick={() => navigate('/employee/assets')}
-                        className="rounded-lg border-2 border-primary bg-base-100 p-6 text-center transition hover:bg-primary hover:text-primary-content"
-                    >
-                        <div className="text-3xl mb-2">📦</div>
-                        <p className="font-semibold">My Assets</p>
-                        <p className="text-sm text-base-content/60">View your assets</p>
-                    </button>
-                    <button
-                        onClick={() => navigate('/employee/request')}
-                        className="rounded-lg border-2 border-primary bg-base-100 p-6 text-center transition hover:bg-primary hover:text-primary-content"
-                    >
-                        <div className="text-3xl mb-2">📋</div>
-                        <p className="font-semibold">Request Asset</p>
-                        <p className="text-sm text-base-content/60">Browse & request</p>
-                    </button>
-                    <button
-                        onClick={() => navigate('/employee/team')}
-                        className="rounded-lg border-2 border-primary bg-base-100 p-6 text-center transition hover:bg-primary hover:text-primary-content"
-                    >
-                        <div className="text-3xl mb-2">👥</div>
-                        <p className="font-semibold">My Team</p>
-                        <p className="text-sm text-base-content/60">View teammates</p>
-                    </button>
-                    <button
-                        onClick={() => navigate('/profile')}
-                        className="rounded-lg border-2 border-primary bg-base-100 p-6 text-center transition hover:bg-primary hover:text-primary-content"
-                    >
-                        <div className="text-3xl mb-2">👤</div>
-                        <p className="font-semibold">Profile</p>
-                        <p className="text-sm text-base-content/60">View profile</p>
-                    </button>
-                </div> */}
-
-                {/* Available Assets Preview */}
                 <div className="rounded-2xl bg-base-100 p-6 shadow">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xl font-bold">Available Assets</h3>
@@ -104,7 +99,7 @@ const EmployeeDashboard = () => {
                         </div>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {availableAssetsPreview.slice(0, 6).map((asset) => (
+                            {availableAssetsPreview.slice(0, 9).map((asset) => (
                                 <div key={asset._id} className="rounded-lg border border-base-300 p-4">
                                     <div className="mb-3 h-32 overflow-hidden rounded-lg bg-base-200">
                                         <img
@@ -113,9 +108,9 @@ const EmployeeDashboard = () => {
                                             className="h-full w-full object-cover"
                                         />
                                     </div>
-                                    <h4 className="font-semibold">{asset.name}</h4>
+                                    <h4 className="font-semibold">{asset.productName || asset.name}</h4>
                                     <p className="text-sm text-base-content/60 mb-2">
-                                        Qty: <span className="font-semibold text-success">{asset.quantity}</span>
+                                        Qty: <span className="font-semibold text-success">{asset.availableQuantity ?? asset.quantity ?? 0}</span>
                                     </p>
                                     <button
                                         onClick={() => navigate('/employee/request')}

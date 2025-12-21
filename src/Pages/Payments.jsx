@@ -25,11 +25,9 @@ const Payments = () => {
         const verifyAndRefetch = async () => {
             setIsVerifying(true);
             try {
-                console.log('Verifying payment session:', sessionId);
                 const result = await verifyPaymentSession(sessionId);
                 
                 if (result.success) {
-                    console.log('Session verified, refetching payment history');
                     // Wait a bit and refetch payment history
                     await new Promise(resolve => setTimeout(resolve, 500));
                     await refetch();

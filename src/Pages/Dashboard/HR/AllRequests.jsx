@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateRequest, getRequests, getEmployeeLimitCheck } from "../../../Services/api";
 import DashboardLayout from "./DashboardLayout";
 import { toast } from 'react-toastify';
-import { useAuth } from "../../../Contents/AuthContext/useAuth";
 
 const statusColors = {
     pending: "badge-warning",
@@ -15,29 +13,22 @@ const statusColors = {
 const AllRequests = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
-    const { user: hrProfile } = useAuth();
-    const [processingId, setProcessingId] = useState(null);
-
 
     const { data: requests = [], isLoading } = useQuery({
         queryKey: ['requests'],
         queryFn: async () => {
             const result = await getRequests();
             return result.success ? (Array.isArray(result.data) ? result.data : []) : [];
-        },
-        onError: (err) => console.error('Failed to fetch requests:', err)
+        }
     });
 
-
-    const { data: limitData, isLoading: limitLoading } = useQuery({
+    const { data: limitData } = useQuery({
         queryKey: ['employee-limit'],
         queryFn: async () => {
             const result = await getEmployeeLimitCheck();
             return result.success ? result.data : null;
-        },
-        onError: (err) => console.error('Failed to fetch limit:', err)
+        }
     });
-
 
     const approveMutation = useMutation({
         mutationFn: (id) => updateRequest(id, { status: 'accepted' }),
@@ -46,11 +37,9 @@ const AllRequests = () => {
             queryClient.invalidateQueries({ queryKey: ['employees'] });
             queryClient.invalidateQueries({ queryKey: ['assets'] });
             queryClient.invalidateQueries({ queryKey: ['employee-limit'] });
-            setProcessingId(null);
             toast.success('Request approved successfully!');
         },
         onError: (error) => {
-            setProcessingId(null);
             if (error.includes('limit reached')) {
                 toast.error("Plan limit exceeded. Please upgrade.");
                 navigate('/hr/upgrade');
@@ -60,12 +49,10 @@ const AllRequests = () => {
         }
     });
 
-
     const rejectMutation = useMutation({
         mutationFn: (id) => updateRequest(id, { status: 'rejected' }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['requests'] });
-            setProcessingId(null);
             toast.success('Request rejected successfully!');
         },
         onError: (error) => toast.error(error.message || 'Failed to reject request')
@@ -74,14 +61,12 @@ const AllRequests = () => {
     const handleApprove = (requestId) => {
         const confirmed = window.confirm("Approve this request? This will deduct asset quantity.");
         if (!confirmed) return;
-        setProcessingId(requestId);
         approveMutation.mutate(requestId);
     };
 
     const handleReject = (requestId) => {
         const confirmed = window.confirm("Reject this request?");
         if (!confirmed) return;
-        setProcessingId(requestId);
         rejectMutation.mutate(requestId);
     };
 
@@ -137,8 +122,8 @@ const AllRequests = () => {
                                 </td>
                                 <td>
                                     <div>
-                                        <p className="font-semibold">{req.asset?.name || req.assetName || "Asset"}</p>
-                                        <p className="text-sm text-base-content/60">Qty: {req.quantity ?? 1}</p>
+                                        <p className="font-semibold">{req.asset?.productName || req.assetName || "Asset"}</p>
+                                        <p className="text-sm text-base-content/60">Stock: {req.asset?.availableQuantity ?? req.asset?.quantity ?? "N/A"}</p>
                                     </div>
                                 </td>
                                 <td>{req.note || "-"}</td>
@@ -153,7 +138,7 @@ const AllRequests = () => {
                                         type="button"
                                         className="btn btn-sm"
                                         onClick={() => handleApprove(req._id)}
-                                        disabled={processingId === req._id || req.status === "accepted" || approveMutation.isPending || rejectMutation.isPending || !limitData?.canAdd}
+                                        disabled={req.status === "accepted" || approveMutation.isPending || rejectMutation.isPending || !limitData?.canAdd}
                                     >
                                         Approve
                                     </button>
@@ -161,7 +146,7 @@ const AllRequests = () => {
                                         type="button"
                                         className="btn btn-sm btn-outline"
                                         onClick={() => handleReject(req._id)}
-                                        disabled={processingId === req._id || req.status === "rejected" || approveMutation.isPending || rejectMutation.isPending}
+                                        disabled={req.status === "rejected" || approveMutation.isPending || rejectMutation.isPending}
                                     >
                                         Reject
                                     </button>

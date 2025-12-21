@@ -8,7 +8,7 @@ const AuthProvider = ({ children }) => {
     const [load, setLoad] = useState(true);
 
 
-    // Fetch user profile from backend and update localStorage/context
+    // Fetch and sync user profile
     const fetchAndSyncUserProfile = async (firebaseUser) => {
         if (!firebaseUser?.email) {
             setUser(null);

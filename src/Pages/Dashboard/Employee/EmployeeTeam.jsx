@@ -1,11 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { getMyTeam } from '../../../Services/api';
 import EmployeeDashboardLayout from './EmployeeDashboardLayout';
-import { useUserData } from '../../../Hooks/useUserData';
 
 const EmployeeTeam = () => {
-    const currentUser = useUserData();
-
     const { data: teamMembers = [], isLoading } = useQuery({
         queryKey: ['team'],
         queryFn: async () => {
