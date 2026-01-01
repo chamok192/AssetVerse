@@ -1,11 +1,10 @@
-import { auth } from '../FireBase/firebase.init';
-import { signOut } from 'firebase/auth';
 import { clearToken } from '../Services/api';
 
 export const useLogout = () => ({
     handleLogout: async () => {
-        await signOut(auth);
         localStorage.removeItem('userData');
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
         clearToken();
         window.dispatchEvent(new Event('storage'));
     }

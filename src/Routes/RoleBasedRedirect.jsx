@@ -15,7 +15,7 @@ const RoleBasedRedirect = () => {
                 if (userRole === 'hr') {
                     navigate('/hr/assets', { replace: true });
                 } else if (userRole === 'employee') {
-                    navigate('/employee/dashboard', { replace: true });
+                    navigate('/employee/assets', { replace: true });
                 } else {
                     navigate('/', { replace: true });
                 }

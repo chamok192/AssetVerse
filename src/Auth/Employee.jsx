@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { registerEmployee, getFieldError, uploadImageToImgBB } from './authService';
+import { registerEmployee, getFieldError, uploadImageToImgBB, checkEmailExists } from './authService';
 
 const init = { name: '', email: '', password: '', dateOfBirth: '', profileImage: '', role: 'Employee' };
 
@@ -47,10 +47,28 @@ const Employee = () => {
     const [load, setLoad] = useState(false);
     const [preview, setPreview] = useState('');
     const [file, setFile] = useState(null);
+    const [emailExists, setEmailExists] = useState(false);
 
-    const getErr = (f) => getFieldError(f, form[f], touch[f]);
-    const change = (e) => { const { name, value } = e.target; setForm(p => ({ ...p, [name]: value })); setTouch(p => ({ ...p, [name]: true })); setErr(''); setSuc(''); };
-    const blur = (e) => setTouch(p => ({ ...p, [e.target.name]: true }));
+    const getErr = (f) => {
+        if (f === 'email' && emailExists) return 'Email already registered';
+        return getFieldError(f, form[f], touch[f]);
+    };
+    const change = (e) => { 
+        const { name, value } = e.target; 
+        setForm(p => ({ ...p, [name]: value })); 
+        setTouch(p => ({ ...p, [name]: true })); 
+        setErr(''); 
+        setSuc(''); 
+        if (name === 'email') setEmailExists(false);
+    };
+    const blur = async (e) => {
+        const name = e.target.name;
+        setTouch(p => ({ ...p, [name]: true }));
+        if (name === 'email' && form.email) {
+            const exists = await checkEmailExists(form.email);
+            setEmailExists(exists);
+        }
+    };
     const upFile = (e) => { const f = e.target.files?.[0]; if (f) { setFile(f); setPreview(URL.createObjectURL(f)); setForm(p => ({ ...p, profileImage: '' })); setTouch(p => ({ ...p, profileImage: true })); } };
 
     const submit = async (e) => {

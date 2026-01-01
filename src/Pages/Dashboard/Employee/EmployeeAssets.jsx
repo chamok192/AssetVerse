@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getEmployeeAssets, deleteEmployeeAsset, api } from '../../../Services/api';
 import EmployeeDashboardLayout from './EmployeeDashboardLayout';
 import { toast } from 'react-toastify';
@@ -7,16 +7,19 @@ import { toast } from 'react-toastify';
 const EmployeeAssets = () => {
     const [search, setSearch] = useState('');
     const [type, setType] = useState('');
+    const queryClient = useQueryClient();
 
     const { data: response = {}, isLoading, refetch } = useQuery({
         queryKey: ['employee-assets', search, type],
         queryFn: async () => {
-            const result = await getEmployeeAssets();
+            const result = await getEmployeeAssets(search, type);
             return result;
         }
     });
 
-    const assets = response.data || [];
+    const assets = (response.data || []).filter((asset, index, self) =>
+        self.findIndex(a => a._id === asset._id) === index
+    );
 
     const handleReturn = async (id) => {
         try {
@@ -25,6 +28,7 @@ const EmployeeAssets = () => {
                 notes: ''
             });
             toast.success('Asset returned successfully!');
+            queryClient.invalidateQueries({ queryKey: ['assets'] });
             refetch();
         } catch (err) {
             toast.error('Failed to return asset: ' + (err?.response?.data?.error || 'Unknown error'));
@@ -35,7 +39,8 @@ const EmployeeAssets = () => {
         if (!confirm('Are you sure you want to delete this asset assignment?')) return;
         try {
             await deleteEmployeeAsset(id);
-            toast.success('Asset deleted successfully!');
+            toast.success('Asset assignment deleted successfully!');
+            queryClient.invalidateQueries({ queryKey: ['assets'] });
             refetch();
         } catch (err) {
             toast.error('Failed to delete asset: ' + (err?.response?.data?.error || 'Unknown error'));
@@ -93,12 +98,12 @@ const EmployeeAssets = () => {
                         </thead>
                         <tbody>
                             {assets.map(asset => {
-                                // Handle schema
-                                const assetName = asset.assetName || asset.name || asset.productName || 'Unknown Asset';
-                                const assetImage = asset.assetImage || asset.image || asset.productImage || 'https://via.placeholder.com/40';
-                                const assetType = asset.assetType || asset.type || asset.productType || 'Unknown';
+                                const assetName = asset.assetName || 'Unknown Asset';
+                                const assetImage = asset.assetImage || 'https://placehold.co/40';
+                                const assetType = asset.assetType || 'Unknown';
                                 const companyName = asset.companyName || 'Unknown Company';
-                                const assignmentDate = asset.assignmentDate || asset.approvalDate || asset.requestDate;
+                                const requestDate = asset.requestDate;
+                                const approvalDate = asset.assignmentDate;
                                 const status = asset.status || 'assigned';
 
                                 const isReturnable = assetType === 'Returnable' || assetType === 'returnable';
@@ -110,14 +115,14 @@ const EmployeeAssets = () => {
                                                 src={assetImage}
                                                 alt={assetName}
                                                 className="h-10 w-10 rounded object-cover"
-                                                onError={(e) => { e.target.src = 'https://via.placeholder.com/40?text=No+Image'; }}
+                                                onError={(e) => { e.target.src = 'https://placehold.co/40?text=No+Image'; }}
                                             />
                                         </td>
                                         <td className="font-medium">{assetName}</td>
                                         <td className="capitalize">{assetType}</td>
                                         <td>{companyName}</td>
-                                        <td>{assignmentDate ? new Date(assignmentDate).toLocaleDateString() : 'N/A'}</td>
-                                        <td>{assignmentDate ? new Date(assignmentDate).toLocaleDateString() : 'N/A'}</td>
+                                        <td>{requestDate ? new Date(requestDate).toLocaleDateString() : 'N/A'}</td>
+                                        <td>{approvalDate ? new Date(approvalDate).toLocaleDateString() : 'N/A'}</td>
                                         <td>
                                             <span className={`badge ${status === 'assigned' ? 'badge-success' : 'badge-neutral'
                                                 }`}>
@@ -125,20 +130,24 @@ const EmployeeAssets = () => {
                                             </span>
                                         </td>
                                         <td>
-                                            {isReturnable && status === 'assigned' && (
-                                                <button
-                                                    onClick={() => handleReturn(asset._id)}
-                                                    className="btn btn-sm btn-error"
-                                                >
-                                                    Return
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => handleDelete(asset._id)}
-                                                className="btn btn-sm btn-outline btn-error ml-2"
-                                            >
-                                                Delete
-                                            </button>
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+                                                {isReturnable && status === 'assigned' && (
+                                                    <button
+                                                        onClick={() => handleReturn(asset._id)}
+                                                        className="btn btn-sm btn-error"
+                                                    >
+                                                        Return
+                                                    </button>
+                                                )}
+                                                {!isReturnable && status === 'assigned' && (
+                                                    <button
+                                                        onClick={() => handleDelete(asset._id)}
+                                                        className="btn btn-sm btn-outline btn-error"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 );

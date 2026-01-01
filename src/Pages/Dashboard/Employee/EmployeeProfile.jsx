@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { auth } from "../../../FireBase/firebase.init";
 import { updateUserProfile, getUserByEmail } from "../../../Services/api";
 import { uploadImageToImgBB } from "../../../Auth/authService";
 import EmployeeDashboardLayout from "./EmployeeDashboardLayout";
+import { useAuth } from "../../../Contents/AuthContext/useAuth";
 
 const EmployeeProfile = () => {
     const navigate = useNavigate();
+    const { user: authUser } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -25,29 +26,28 @@ const EmployeeProfile = () => {
         const loadProfile = async () => {
             try {
                 setLoading(true);
-                const currentUser = auth.currentUser;
-                if (!currentUser) {
+                if (!authUser?.email) {
                     navigate("/login");
                     return;
                 }
 
                 const userData = JSON.parse(localStorage.getItem("userData")) || {};
-                const result = await getUserByEmail(currentUser.email);
+                const result = await getUserByEmail(authUser.email);
 
                 if (result.success && result.data) {
                     setProfile(result.data);
                     setForm({
-                        name: result.data.name || currentUser.displayName || "",
-                        email: result.data.email || currentUser.email || "",
-                        profileImage: result.data.profileImage || currentUser.photoURL || "",
+                        name: result.data.name || authUser.name || "",
+                        email: result.data.email || authUser.email || "",
+                        profileImage: result.data.profileImage || authUser.profileImage || "",
                         dateOfBirth: result.data.dateOfBirth || ""
                     });
                 } else {
                     setProfile(userData);
                     setForm({
-                        name: userData.name || currentUser.displayName || "",
-                        email: userData.email || currentUser.email || "",
-                        profileImage: userData.profileImage || currentUser.photoURL || "",
+                        name: userData.name || authUser.name || "",
+                        email: userData.email || authUser.email || "",
+                        profileImage: userData.profileImage || authUser.profileImage || "",
                         dateOfBirth: userData.dateOfBirth || ""
                     });
                 }
@@ -91,8 +91,7 @@ const EmployeeProfile = () => {
         try {
             setSaving(true);
             setError("");
-            const currentUser = auth.currentUser;
-            if (!currentUser) {
+            if (!authUser?.email) {
                 setError("User not authenticated");
                 return;
             }
@@ -168,13 +167,18 @@ const EmployeeProfile = () => {
                                 {profile.affiliations.map((aff) => (
                                     <div key={aff._id} className="flex items-center gap-3 p-2 rounded-lg bg-base-200 border border-base-300">
                                         <div className="avatar">
-                                            <div className="w-8 h-8 rounded bg-base-300">
-                                                {aff.companyLogo && <img src={aff.companyLogo} alt={aff.companyName} />}
+                                            <div className="w-8 h-8 rounded overflow-hidden bg-base-200">
+                                                <img
+                                                    src={aff.hr?.companyLogo || aff.hr?.profileImage || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect fill='%23e0e0e0' width='32' height='32'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='8' fill='%23999' text-anchor='middle' dy='.3em'%3ECompany%3C/text%3E%3C/svg%3E"}
+                                                    alt={aff.hr?.companyName || aff.companyName || 'Company'}
+                                                    className="w-8 h-8 object-cover"
+                                                    onError={(e) => { e.target.onerror = null; e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect fill='%23e0e0e0' width='32' height='32'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='8' fill='%23999' text-anchor='middle' dy='.3em'%3ECompany%3C/text%3E%3C/svg%3E" }}
+                                                />
                                             </div>
                                         </div>
                                         <div className="flex-1 overflow-hidden">
-                                            <p className="text-xs font-bold truncate">{aff.companyName}</p>
-                                            <p className="text-[10px] text-base-content/50">Joined: {new Date(aff.affiliationDate).toLocaleDateString()}</p>
+                                            <p className="text-xs font-bold truncate">{aff.hr?.companyName || aff.companyName || 'Unknown Company'}</p>
+                                            <p className="text-[10px] text-base-content/50">Joined: {aff.joinedAt ? new Date(aff.joinedAt).toLocaleDateString() : aff.lastUpdate ? new Date(aff.lastUpdate).toLocaleDateString() : 'Date not available'}</p>
                                         </div>
                                     </div>
                                 ))}

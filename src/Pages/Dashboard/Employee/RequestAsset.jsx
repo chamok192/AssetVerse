@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAssets, createRequest, getUserData } from '../../../Services/api';
 import EmployeeDashboardLayout from './EmployeeDashboardLayout';
 import { toast } from 'react-toastify';
 
 const RequestAsset = () => {
+    const navigate = useNavigate();
     const [selectedAsset, setSelectedAsset] = useState(null);
     const [note, setNote] = useState('');
     const [showModal, setShowModal] = useState(false);
@@ -13,15 +15,18 @@ const RequestAsset = () => {
     const queryClient = useQueryClient();
 
     const { data: queryData = { data: [], totalPages: 1 }, isLoading } = useQuery({
-        queryKey: ['assets', { page, limit, stockStatus: 'available' }],
+        queryKey: ['assets', { page, limit }],
         queryFn: async () => {
             const result = await getAssets(page, limit, '', 'all', 'available');
             return {
-                data: result.data || [],
-                totalPages: result.totalPages || 1
+                data: result.data?.data || [],
+                totalPages: result.data?.totalPages || 1
             };
         },
-        keepPreviousData: true
+        keepPreviousData: true,
+        // Poll every 5 seconds while the page is visible to get near-real-time counts
+        refetchInterval: 5000,
+        refetchIntervalInBackground: false
     });
 
     const assets = queryData.data;
@@ -31,10 +36,16 @@ const RequestAsset = () => {
         mutationFn: (payload) => createRequest(payload),
         onSuccess: () => {
             toast.success('Request submitted successfully!');
-            queryClient.invalidateQueries({ queryKey: ['requests'] });
+            queryClient.invalidateQueries(['requests']);
+            // Also refresh assets so availability shows updated counts soon
+            queryClient.invalidateQueries(['assets']);
             setShowModal(false);
             setNote('');
             setSelectedAsset(null);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries(['assets']);
+            queryClient.invalidateQueries(['available-assets']);
         },
         onError: (err) => {
             toast.error('Failed to submit request: ' + (err?.error || 'Unknown error'));
@@ -48,6 +59,15 @@ const RequestAsset = () => {
 
     const handleSubmitRequest = () => {
         if (!selectedAsset) return;
+        const available = selectedAsset.availableQuantity ?? selectedAsset.quantity ?? 0;
+        if (available <= 0) {
+            toast.error('Asset is out of stock');
+            setShowModal(false);
+            setSelectedAsset(null);
+            setNote('');
+            return;
+        }
+
         const user = getUserData();
         if (!user?.email) {
             toast.error('User email not found. Please login again.');
@@ -86,14 +106,18 @@ const RequestAsset = () => {
                             const assetImage = asset.productImage || asset.image || "";
                             const assetType = asset.productType || asset.type || "Returnable";
                             const availableQty = asset.availableQuantity ?? asset.quantity ?? 0;
+                            const totalQty = asset.quantity ?? asset.productQuantity ?? 0;
 
                             return (
                                 <div key={asset._id} className="rounded-lg border border-base-300 bg-base-100 p-6 shadow">
                                     <div className="mb-4 h-48 overflow-hidden rounded-lg bg-base-200">
                                         <img
-                                            src={assetImage}
+                                            src={assetImage || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='150' viewBox='0 0 200 150'%3E%3Crect fill='%23e0e0e0' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='14' fill='%23999' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E"}
                                             alt={assetName}
                                             className="h-full w-full object-cover"
+                                            onError={(e) => {
+                                                e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='150' viewBox='0 0 200 150'%3E%3Crect fill='%23e0e0e0' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='14' fill='%23999' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E";
+                                            }}
                                         />
                                     </div>
                                     <h3 className="text-lg font-bold">{assetName}</h3>
@@ -102,14 +126,18 @@ const RequestAsset = () => {
                                             {assetType}
                                         </span>
                                     </p>
-                                    <p className="mb-4 text-sm">
+                                    <p className="mb-2 text-sm">
                                         Available: <span className="font-semibold">{availableQty}</span>
+                                        {totalQty !== undefined && totalQty !== null && (
+                                            <span className="text-sm text-base-content/60"> • Total: <span className="font-semibold">{totalQty}</span></span>
+                                        )}
                                     </p>
                                     <button
                                         onClick={() => handleRequestClick(asset)}
                                         className="btn btn-primary btn-sm w-full"
+                                        disabled={availableQty <= 0}
                                     >
-                                        Request
+                                        {availableQty <= 0 ? 'Out of stock' : 'Request'}
                                     </button>
                                 </div>
                             );

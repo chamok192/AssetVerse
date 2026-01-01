@@ -6,7 +6,7 @@ import { logoutUser } from '../../../Auth/authService';
 
 const DEF_IMG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"%3E%3Crect fill="%23e0e0e0" width="150" height="150"/%3E%3Ctext x="50%25" y="50%25" font-family="Arial" font-size="14" fill="%23999" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
 const publicLinks = [{ label: 'Home', to: '/' }, { label: 'Join as Employee', to: '/join/employee' }, { label: 'Join as HR Manager', to: '/join/hr-manager' }];
-const empMenu = [{ label: 'Dashboard', to: '/employee/dashboard' }, { label: 'My Assets', to: '/employee/assets' }, { label: 'My Team', to: '/employee/team' }, { label: 'Request Asset', to: '/employee/request' }, { label: 'Profile', to: '/profile' }, { label: 'Logout', action: 'logout' }];
+const empMenu = [{ label: 'My Assets', to: '/employee/assets' }, { label: 'My Team', to: '/employee/team' }, { label: 'Request Asset', to: '/employee/request' }, { label: 'Profile', to: '/profile' }, { label: 'Logout', action: 'logout' }];
 const hrMenu = [{ label: 'Dashboard', to: '/hr/assets' }, { label: 'Asset List', to: '/hr/assets' }, { label: 'Add Asset', to: '/hr/assets/new' }, { label: 'All Requests', to: '/hr/requests' }, { label: 'Upgrade Package', to: '/hr/upgrade' }, { label: 'Employee List', to: '/hr/employees' }, { label: 'Profile', to: '/profile' }, { label: 'Logout', action: 'logout' }];
 
 const Nav = () => {

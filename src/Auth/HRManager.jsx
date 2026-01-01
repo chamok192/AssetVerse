@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { registerHRManager, getFieldError, uploadImageToImgBB } from './authService';
+import { registerHRManager, getFieldError, uploadImageToImgBB, checkEmailExists } from './authService';
 import { useNavigate } from 'react-router-dom';
 
-const init = { name: '', profileImage: '', companyName: '', companyLogo: '', email: '', password: '', dateOfBirth: '', role: 'HR', packageLimit: 3, currentEmployees: 0, subscription: 'free' };
+const init = { name: '', profileImage: '', companyName: '', companyLogo: '', email: '', password: '', dateOfBirth: '', role: 'HR', packageLimit: 5, currentEmployees: 0, subscription: 'basic' };
 
 const Input = ({ name, type = 'text', placeholder, label, value, onChange, onBlur, error }) => {
     const [showPassword, setShowPassword] = useState(false);
@@ -49,10 +49,28 @@ const HRManager = () => {
     const [load, setLoad] = useState(false);
     const [profFile, setProfFile] = useState(null);
     const [logoFile, setLogoFile] = useState(null);
+    const [emailExists, setEmailExists] = useState(false);
 
-    const getErr = (f) => getFieldError(f, form[f], touch[f]);
-    const change = (e) => { const { name, value } = e.target; setForm(p => ({ ...p, [name]: value })); setTouch(p => ({ ...p, [name]: true })); setErr(''); setSuc(''); };
-    const blur = (e) => setTouch(p => ({ ...p, [e.target.name]: true }));
+    const getErr = (f) => {
+        if (f === 'email' && emailExists) return 'Email already registered';
+        return getFieldError(f, form[f], touch[f]);
+    };
+    const change = (e) => { 
+        const { name, value } = e.target; 
+        setForm(p => ({ ...p, [name]: value })); 
+        setTouch(p => ({ ...p, [name]: true })); 
+        setErr(''); 
+        setSuc(''); 
+        if (name === 'email') setEmailExists(false);
+    };
+    const blur = async (e) => {
+        const name = e.target.name;
+        setTouch(p => ({ ...p, [name]: true }));
+        if (name === 'email' && form.email) {
+            const exists = await checkEmailExists(form.email);
+            setEmailExists(exists);
+        }
+    };
     const upProf = (e) => { const f = e.target.files?.[0]; if (f) { setProfFile(f); setProfPrev(URL.createObjectURL(f)); setForm(p => ({ ...p, profileImage: '' })); } };
     const upLogo = (e) => { const f = e.target.files?.[0]; if (f) { setLogoFile(f); setLogoPrev(URL.createObjectURL(f)); setForm(p => ({ ...p, companyLogo: '' })); } };
 
@@ -111,7 +129,7 @@ const HRManager = () => {
                         <div className="divider my-2">Auto-Assigned Plan</div>
                         <div className="grid grid-cols-3 gap-4 text-sm">
                             <div className="p-4 bg-base-200 rounded-lg"><p className="font-semibold">Role</p><p className="text-base-content/70">{form.role === 'hr' ? 'HR Manager' : form.role}</p></div>
-                            <div className="p-4 bg-base-200 rounded-lg"><p className="font-semibold">Package Limit</p><p className="text-base-content/70">{form.packageLimit} assets</p></div>
+                            <div className="p-4 bg-base-200 rounded-lg"><p className="font-semibold">Package Limit</p><p className="text-base-content/70">{form.packageLimit} employees</p></div>
                             <div className="p-4 bg-base-200 rounded-lg"><p className="font-semibold">Plan</p><p className="text-base-content/70">{form.subscription}</p></div>
                         </div>
                         {err && <p className="text-error text-sm font-semibold">{err}</p>}

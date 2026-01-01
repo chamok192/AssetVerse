@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { Navigate } from "react-router";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../FireBase/firebase.init";
 
 const PrivateRoute = ({ children, requiredRole }) => {
     const [loading, setLoading] = useState(true);
@@ -9,28 +7,26 @@ const PrivateRoute = ({ children, requiredRole }) => {
     const [role, setRole] = useState(null);
 
     useEffect(() => {
-        const getRoleFromStorage = () => {
-            try {
-                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-                const userRole = userData.role ? String(userData.role).trim().toLowerCase() : null;
-                return userRole;
-            } catch {
-                return null;
-            }
-        };
-
-        const unsub = onAuthStateChanged(auth, (user) => {
-            if (user) {
+        const checkAuth = () => {
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            if (token && userData.email) {
                 setIsAuth(true);
-                const storedRole = getRoleFromStorage();
-                if (storedRole) setRole(storedRole);
+                const userRole = userData.role ? String(userData.role).trim().toLowerCase() : null;
+                setRole(userRole);
             } else {
                 setIsAuth(false);
                 setRole(null);
             }
             setLoading(false);
-        });
-        return unsub;
+        };
+
+        checkAuth();
+
+        // Listen for storage changes
+        const handleStorage = () => checkAuth();
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
     }, []);
 
     if (loading) return <div className="min-h-screen flex items-center justify-center"><span className="loading loading-spinner loading-lg"></span></div>;
@@ -41,7 +37,7 @@ const PrivateRoute = ({ children, requiredRole }) => {
         const userRole = role ? String(role).toLowerCase() : null;
         
         if (userRole !== required) {
-            const path = userRole === 'hr' ? '/hr/assets' : userRole === 'employee' ? '/employee/dashboard' : '/';
+            const path = userRole === 'hr' ? '/hr/assets' : userRole === 'employee' ? '/employee/assets' : '/';
             return <Navigate to={path} replace />;
         }
     }

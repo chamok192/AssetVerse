@@ -85,7 +85,7 @@ const Login = () => {
 
         setSuc('Login successful! Redirecting...');
         const role = (data.role || '').toLowerCase();
-        const redirectPath = role === 'hr' ? '/hr/assets' : role === 'employee' ? '/employee/dashboard' : '/';
+        const redirectPath = role === 'hr' ? '/hr/assets' : role === 'employee' ? '/employee/assets' : '/';
 
         setTimeout(() => nav(redirectPath), 1500);
         setLoad(false);

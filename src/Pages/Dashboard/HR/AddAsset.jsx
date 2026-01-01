@@ -20,6 +20,7 @@ const AddAsset = () => {
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState("");
     const [error, setError] = useState("");
+    const [availableQty, setAvailableQty] = useState(0);
 
     // Fetch asset data if editing
     const { data: assetData, isLoading: assetLoading } = useQuery({
@@ -35,24 +36,22 @@ const AddAsset = () => {
             }
         },
         enabled: isEdit,
-        staleTime: Infinity
+        // Removed staleTime: Infinity to ensure fresh data
     });
 
     // Load form data
     useEffect(() => {
         if (!assetData || !isEdit) return;
-        
+
         const imageUrl = assetData.productImage || assetData.image || "";
-        const handler = () => {
-            setForm({
-                name: assetData.productName || assetData.name || "",
-                image: imageUrl,
-                type: assetData.productType || assetData.type || "returnable",
-                quantity: assetData.productQuantity ?? assetData.quantity ?? 1
-            });
-            setImagePreview(imageUrl);
-        };
-        handler();
+        setForm({
+            name: assetData.productName || assetData.name || "",
+            image: imageUrl,
+            type: assetData.productType || assetData.type || "returnable",
+            quantity: assetData.productQuantity ?? assetData.quantity ?? assetData.availableQuantity ?? 1
+        });
+        setAvailableQty(assetData.availableQuantity ?? 0);
+        setImagePreview(imageUrl);
     }, [assetData, isEdit]);
 
     // Create asset mutation
@@ -91,14 +90,14 @@ const AddAsset = () => {
                 setError("Please select a valid image file");
                 return;
             }
-            
+
             if (file.size > 5 * 1024 * 1024) {
                 setError("Image size should be less than 5MB");
                 return;
             }
 
             setImageFile(file);
-            
+
             // Set preview
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -145,9 +144,13 @@ const AddAsset = () => {
 
         const payload = {
             name: form.name,
+            productName: form.name,
             image: imageUrl,
+            productImage: imageUrl,
             type: form.type,
-            quantity: Number(form.quantity) || 0
+            productType: form.type,
+            quantity: Number(form.quantity) || 0,
+            productQuantity: Number(form.quantity) || 0
         };
 
         if (isEdit) {
@@ -263,6 +266,13 @@ const AddAsset = () => {
                                     onChange={(e) => handleChange("quantity", e.target.value)}
                                     className="input input-bordered w-full"
                                 />
+                                {isEdit && (
+                                    <div className="label">
+                                        <span className="label-text-alt text-base-content/60">
+                                            Total stock capacity. Currently <strong>{availableQty}</strong> units are in stock.
+                                        </span>
+                                    </div>
+                                )}
                             </label>
                         </div>
 
@@ -274,8 +284,8 @@ const AddAsset = () => {
                             {createMutation.isPending || updateMutation.isPending
                                 ? "Saving..."
                                 : isEdit
-                                  ? "Update Asset"
-                                  : "Add Asset"}
+                                    ? "Update Asset"
+                                    : "Add Asset"}
                         </button>
                     </form>
                 )}

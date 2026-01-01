@@ -12,6 +12,7 @@ const EmployeeList = () => {
     const [removingId, setRemovingId] = useState(null);
     const [assigningTo, setAssigningTo] = useState(null);
     const [selectedAssetId, setSelectedAssetId] = useState('');
+    const [assetFilter, setAssetFilter] = useState('');
     const { user: hrProfile, load } = useAuth();
 
     const limit = hrProfile?.packageLimit || 3;
@@ -26,8 +27,8 @@ const EmployeeList = () => {
         queryFn: async () => {
             const result = await getEmployees(page, pageLimit);
             return {
-                data: result.success ? result.data : [],
-                totalPages: result.totalPages || 1
+                data: result.success ? result.data.data : [],
+                totalPages: result.success ? result.data.totalPages : 1
             };
         },
         keepPreviousData: true
@@ -39,36 +40,67 @@ const EmployeeList = () => {
 
     const removeEmployeeMutation = useMutation({
         mutationFn: removeEmployee,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['employees'] });
-            setRemovingId(null);
-            toast.success('Employee removed from team successfully!');
+        onSuccess: (res) => {
+            if (res.success) {
+                toast.success('Employee removed from team successfully!');
+                queryClient.invalidateQueries({ queryKey: ['employees'] });
+                // Also invalidate profile to update employee count
+                queryClient.invalidateQueries({ queryKey: ['profile'] });
+                setRemovingId(null);
+            } else {
+                toast.error(res.error || 'Failed to remove employee');
+            }
         },
         onError: (error) => toast.error(error.message || 'Failed to remove employee')
     });
 
     const assignMutation = useMutation({
         mutationFn: ({ assetId, email }) => assignAssetManual(assetId, email),
+        onMutate: async ({ assetId }) => {
+            // Optimistically decrement availableQuantity for assetId in cached assets lists
+            await queryClient.cancelQueries(['assets']);
+            queryClient.setQueriesData({ predicate: d => d.queryKey && d.queryKey[0] === 'assets' }, (old) => {
+                if (!old) return old;
+                if (Array.isArray(old)) return old.map(a => a._id === assetId ? { ...a, availableQuantity: Math.max(0, (a.availableQuantity ?? a.quantity ?? 0) - 1) } : a);
+                if (old.data && Array.isArray(old.data)) {
+                    return { ...old, data: old.data.map(a => a._id === assetId ? { ...a, availableQuantity: Math.max(0, (a.availableQuantity ?? a.quantity ?? 0) - 1) } : a) };
+                }
+                return old;
+            });
+        },
         onSuccess: (res) => {
             if (res.success) {
                 toast.success('Asset assigned successfully!');
-                queryClient.invalidateQueries({ queryKey: ['employees'] });
-                queryClient.invalidateQueries({ queryKey: ['assets'] });
+                queryClient.invalidateQueries(['employees']);
+                queryClient.invalidateQueries(['assets']);
+                queryClient.invalidateQueries(['available-assets']);
                 setAssigningTo(null);
                 setSelectedAssetId('');
             } else {
                 toast.error(res.error || 'Failed to assign asset');
             }
         },
+        onError: () => {
+            toast.error('Failed to assign asset');
+            // Let settled invalidation refresh correct values
+        },
+        onSettled: () => {
+            // Ensure assets list is refetched to reflect latest quantities
+            queryClient.invalidateQueries(['assets']);
+            queryClient.invalidateQueries(['available-assets']);
+        },
         onError: (err) => toast.error(err.message || 'Failed to assign asset')
     });
 
-    // Fetch all assets that are in stock
+    // Fetch all assets
     const { data: availableAssets = [] } = useQuery({
         queryKey: ['available-assets'],
         queryFn: async () => {
-            const res = await getAssets(1, 100, '', 'all', 'available');
-            return res.data || [];
+            // Fetch a larger page size so all assets appear in the assign modal
+            const res = await getAssets(1, 1000, '', 'all', '');
+            const list = res.data?.data || [];
+            // sort alphabetically for easier selection
+            return list.sort((a, b) => (a.productName || a.name || '').localeCompare(b.productName || b.name || ''));
         },
         enabled: !!assigningTo
     });
@@ -210,26 +242,39 @@ const EmployeeList = () => {
 
                         <div className="form-control w-full">
                             <label className="label">
-                                <span className="label-text">Select Asset</span>
+                                <span className="label-text">Search & select asset</span>
                             </label>
-                            <select
-                                className="select select-bordered w-full"
-                                value={selectedAssetId}
-                                onChange={(e) => setSelectedAssetId(e.target.value)}
-                            >
-                                <option value="">-- Choose an asset --</option>
-                                {availableAssets.map(asset => {
-                                    const assetName = asset.productName || asset.name || "Untitled";
-                                    const availableQty = asset.availableQuantity ?? asset.quantity ?? 0;
-                                    return (
-                                        <option key={asset._id} value={asset._id}>
-                                            {assetName} (Qty: {availableQty})
-                                        </option>
-                                    );
-                                })}
-                            </select>
+
+                            <input
+                                type="text"
+                                placeholder="Search assets by name..."
+                                value={assetFilter}
+                                onChange={(e) => setAssetFilter(e.target.value)}
+                                className="input input-bordered w-full mb-2"
+                            />
+
+                            <div className="border rounded overflow-hidden bg-base-100">
+                                <div className="max-h-56 overflow-y-auto">
+                                    {availableAssets.filter(a => (a.productName || a.name || '').toLowerCase().includes(assetFilter.toLowerCase())).map(asset => {
+                                        const assetName = asset.productName || asset.name || "Untitled";
+                                        const totalQty = asset.availableQuantity ?? asset.quantity ?? asset.productQuantity ?? 0;
+                                        const isSelected = selectedAssetId === asset._id;
+                                        return (
+                                            <div
+                                                key={asset._id}
+                                                onClick={() => setSelectedAssetId(asset._id)}
+                                                className={`p-3 flex justify-between items-center cursor-pointer ${isSelected ? 'bg-primary text-white' : 'hover:bg-base-200'}`}
+                                            >
+                                                <div className="truncate">{assetName}</div>
+                                                <div className="text-sm text-base-content/60">Available: {totalQty}</div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
                             {availableAssets.length === 0 && (
-                                <p className="mt-2 text-xs text-error">No available assets in stock.</p>
+                                <p className="mt-2 text-xs text-error">No assets found.</p>
                             )}
                         </div>
 

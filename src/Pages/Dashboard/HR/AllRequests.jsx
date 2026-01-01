@@ -32,12 +32,51 @@ const AllRequests = () => {
 
     const approveMutation = useMutation({
         mutationFn: (id) => updateRequest(id, { status: 'accepted' }),
+        // Optimistic update: decrement the asset availability in cache
+        onMutate: async (requestId) => {
+            await queryClient.cancelQueries(['requests']);
+            const previousRequests = queryClient.getQueryData(['requests']);
+
+            // Find the request to extract assetId
+            const reqList = Array.isArray(previousRequests) ? previousRequests : (previousRequests?.data || previousRequests);
+            const requestObj = Array.isArray(reqList) ? reqList.find(r => String(r._id) === String(requestId)) : null;
+            const assetId = requestObj?.assetId;
+
+            if (assetId) {
+                // Decrement matching asset's availableQuantity across all assets queries
+                queryClient.setQueriesData({ predicate: d => d.queryKey && d.queryKey[0] === 'assets' }, (old) => {
+                    if (!old) return old;
+                    // old may be an object with data field or an array
+                    if (Array.isArray(old)) return old.map(a => a._id === assetId ? { ...a, availableQuantity: Math.max(0, (a.availableQuantity ?? a.quantity ?? 0) - 1) } : a);
+                    if (old.data && Array.isArray(old.data)) {
+                        return { ...old, data: old.data.map(a => a._id === assetId ? { ...a, availableQuantity: Math.max(0, (a.availableQuantity ?? a.quantity ?? 0) - 1) } : a) };
+                    }
+                    return old;
+                });
+            }
+
+            return { previousRequests };
+        },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['requests'] });
-            queryClient.invalidateQueries({ queryKey: ['employees'] });
-            queryClient.invalidateQueries({ queryKey: ['assets'] });
-            queryClient.invalidateQueries({ queryKey: ['employee-limit'] });
+            // Ensure all relevant lists are refetched
+            queryClient.invalidateQueries(['requests']);
+            queryClient.invalidateQueries(['employees']);
+            queryClient.invalidateQueries(['assets']);
+            queryClient.invalidateQueries(['available-assets']);
+            queryClient.invalidateQueries(['employee-limit']);
             toast.success('Request approved successfully!');
+        },
+        onError: (err, variables, context) => {
+            // Rollback requests if needed
+            if (context?.previousRequests) {
+                queryClient.setQueryData(['requests'], context.previousRequests);
+            }
+            toast.error('Failed to approve request');
+        },
+        onSettled: () => {
+            // Ensure assets are refetched
+            queryClient.invalidateQueries(['assets']);
+            queryClient.invalidateQueries(['available-assets']);
         },
         onError: (error) => {
             if (error.includes('limit reached')) {

@@ -33,11 +33,11 @@ const HRAssetDashboard = () => {
         queryFn: async () => {
             const result = await getAssets(page, limit, search, typeFilter);
             return {
-                data: result.data || [],
-                totalPages: result.totalPages || 1,
-                totalAssets: result.totalAssets || 0,
-                totalQuantity: result.totalQuantity || 0,
-                lowStock: result.lowStock || 0
+                data: result.success ? result.data.data : [],
+                totalPages: result.success ? result.data.totalPages : 1,
+                totalAssets: result.success ? result.data.totalAssets : 0,
+                totalQuantity: result.success ? result.data.totalQuantity : 0,
+                lowStock: result.success ? result.data.lowStock : 0
             };
         },
         keepPreviousData: true
@@ -47,7 +47,7 @@ const HRAssetDashboard = () => {
         queryKey: ['hr-analytics'],
         queryFn: async () => {
             const result = await getHRAnalytics();
-            return result.data || { typeDistribution: [], topRequests: [] };
+            return result.success ? result.data : { typeDistribution: [], topRequests: [] };
         }
     });
 
@@ -323,8 +323,9 @@ const HRAssetDashboard = () => {
                         )}
 
                         {!isLoading && filteredAssets.map((asset) => {
-                            const qty = asset.productQuantity ?? asset.quantity ?? 0;
-                            const qtyColor = qty <= 5 ? "text-warning" : "text-success";
+                            const available = asset.availableQuantity ?? asset.productQuantity ?? asset.quantity ?? 0;
+                            const total = asset.productQuantity ?? asset.quantity ?? available;
+                            const qtyColor = available <= 5 ? "text-warning" : "text-success";
                             const assetName = asset.productName || asset.name || "Untitled";
                             const assetImage = asset.productImage || asset.image || asset.imageUrl;
                             const assetType = asset.productType || asset.type || "N/A";
@@ -338,6 +339,7 @@ const HRAssetDashboard = () => {
                                                     <img
                                                         src={assetImage}
                                                         alt={assetName}
+                                                        onError={(e) => { e.target.src = 'https://placehold.co/40?text=No+Img'; }}
                                                     />
                                                 ) : (
                                                     <div className="w-full h-full bg-warning/20 flex items-center justify-center text-xs font-bold text-warning">
@@ -354,7 +356,8 @@ const HRAssetDashboard = () => {
                                     <td>
                                         <span className="badge badge-soft badge-primary capitalize">{assetType}</span>
                                     </td>
-                                    <td className={`font-semibold ${qtyColor}`}>{qty}</td>
+                                    <td className={`font-semibold ${qtyColor}`}>{available}</td>
+
                                     <td>{asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : "-"}</td>
                                     <td className="space-x-2 text-right">
                                         <button

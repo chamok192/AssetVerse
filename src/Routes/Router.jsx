@@ -13,7 +13,6 @@ import AllRequests from "../Pages/Dashboard/HR/AllRequests";
 import EmployeeList from "../Pages/Dashboard/HR/EmployeeList";
 import UpgradePackage from "../Pages/Dashboard/HR/UpgradePackage";
 import Payments from "../Pages/Dashboard/HR/Payments";
-import EmployeeDashboard from "../Pages/Dashboard/Employee/EmployeeDashboard";
 import EmployeeAssets from "../Pages/Dashboard/Employee/EmployeeAssets";
 import RequestAsset from "../Pages/Dashboard/Employee/RequestAsset";
 import EmployeeTeam from "../Pages/Dashboard/Employee/EmployeeTeam";
@@ -93,19 +92,23 @@ export const router = createBrowserRouter([
             },
             {
                 path: "hr/payments",
-                element: <Payments />,
-                errorElement: <ErrorPage />
-            },
-            { path: "payment-success", element: <PaymentSuccess />, errorElement: <ErrorPage /> },
-            {
-                path: "employee/dashboard",
                 element: (
                     <PrivateRoute>
-                        <EmployeeDashboard />
+                        <Payments />
                     </PrivateRoute>
                 ),
                 errorElement: <ErrorPage />
             },
+            {
+                path: "payments",
+                element: (
+                    <PrivateRoute>
+                        <Payments />
+                    </PrivateRoute>
+                ),
+                errorElement: <ErrorPage />
+            },
+            { path: "payment-success", element: <PaymentSuccess />, errorElement: <ErrorPage /> },
             {
                 path: "employee/assets",
                 element: (

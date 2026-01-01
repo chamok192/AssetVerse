@@ -7,36 +7,35 @@ const PaymentSuccess = () => {
 
   useEffect(() => {
     const sessionId = searchParams.get('sessionId');
-    
+
     if (!sessionId) {
+      navigate('/hr/upgrade');
       return;
     }
 
-    
+    // Process and redirect to payments history
     setTimeout(() => {
-        navigate('/dashboard/payment-success');
-      
-      setTimeout(() => window.location.reload(), 300);
-    }, 2000);
+      navigate('/hr/payments?payment=success&session_id=' + sessionId);
+    }, 1500);
   }, [searchParams, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-base-200">
       <div className="card bg-base-100 shadow-xl p-8 w-full max-w-md">
         <div className="space-y-4">
-            <div className="text-center">
-              <div className="text-5xl text-success mb-4">✓</div>
-              <h1 className="text-2xl font-bold">Payment Successful!</h1>
-            </div>
-            <p className="text-center text-base-content/70">
-              Your package has been upgraded successfully.
-            </p>
-            <p className="text-center text-sm text-base-content/50">
-              Redirecting to your dashboard...
-            </p>
-            <div className="flex justify-center">
-              <span className="loading loading-spinner loading-md"></span>
-            </div>
+          <div className="text-center">
+            <div className="text-5xl text-success mb-4">✓</div>
+            <h1 className="text-2xl font-bold">Payment Successful!</h1>
+          </div>
+          <p className="text-center text-base-content/70">
+            Your package has been upgraded successfully.
+          </p>
+          <p className="text-center text-sm text-base-content/50">
+            Redirecting to your dashboard...
+          </p>
+          <div className="flex justify-center">
+            <span className="loading loading-spinner loading-md"></span>
+          </div>
         </div>
       </div>
     </div>

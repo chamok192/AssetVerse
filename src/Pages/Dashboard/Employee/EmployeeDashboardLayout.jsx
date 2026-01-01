@@ -3,7 +3,6 @@ import { NavLink, useNavigate } from 'react-router';
 import { logoutUser } from '../../../Auth/authService';
 
 const links = [
-    { label: 'Dashboard', to: '/employee/dashboard' },
     { label: 'My Assets', to: '/employee/assets' },
     { label: 'Request Asset', to: '/employee/request' },
     { label: 'My Team', to: '/employee/team' },

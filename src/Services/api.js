@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
     headers: { 'Content-Type': 'application/json' },
 });
 
@@ -23,8 +23,8 @@ const handler = async (fn, fallback) => {
     try {
         const res = await fn();
         const payload = res.data;
-        if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
-            return { success: true, ...payload };
+        if (payload && typeof payload === 'object' && payload.success !== undefined) {
+            return { success: payload.success, data: payload.data, error: payload.error };
         }
         return { success: true, data: payload };
     } catch (e) {
@@ -51,10 +51,15 @@ export const getAssets = (page = 1, limit = 10, search = '', filter = 'all', sto
 export const createAsset = (data) => {
     const user = getUserData();
     const payload = {
+        ...data,
         productName: data.productName || data.name,
+        name: data.name || data.productName,
         productImage: data.productImage || data.image,
+        image: data.image || data.productImage,
         productType: data.productType || data.type,
+        type: data.type || data.productType,
         productQuantity: Number(data.productQuantity || data.quantity) || 0,
+        quantity: Number(data.quantity || data.productQuantity) || 0,
         hrEmail: user?.email || ''
     };
     return handler(() => api.post('/api/assets', payload), 'Failed to create asset');
@@ -62,13 +67,7 @@ export const createAsset = (data) => {
 export const getAssetById = (id) => handler(() => api.get(`/api/assets/${id}`), 'Failed to fetch asset');
 export const updateAsset = (id, data) => {
     if (!id?.trim()) return { success: false, error: 'Asset ID required' };
-    const payload = {
-        productName: data.productName || data.name,
-        productImage: data.productImage || data.image,
-        productType: data.productType || data.type,
-        productQuantity: Number(data.productQuantity || data.quantity) || 0
-    };
-    return handler(() => api.patch(`/api/assets/${id}`, payload), 'Failed to update asset');
+    return handler(() => api.patch(`/api/assets/${id}`, data), 'Failed to update asset');
 };
 export const deleteAsset = (id) => handler(() => api.delete(`/api/assets/${id}`), 'Failed to delete asset');
 export const getEmployeeLimitCheck = () => handler(() => api.get('/api/users/limit-check'), 'Failed to check employee limit');
@@ -78,11 +77,11 @@ export const rejectRequest = (id) => handler(() => api.patch(`/api/requests/${id
 export const getEmployees = (page = 1, limit = 10) => handler(() => api.get(`/api/employees?page=${page}&limit=${limit}`), 'Failed to fetch employees');
 export const removeEmployee = (id) => handler(() => api.delete(`/api/employees/${id}`), 'Failed to remove employee');
 export const getPaymentHistory = () => handler(() => api.get('/api/payments/history'), 'Failed to fetch history');
-export const createPaymentIntent = (data) => handler(() => api.post('/api/payments/create-checkout', data), 'Failed to create checkout session');
+export const createPaymentIntent = (data) => handler(() => api.post('/payment-checkout-session', data), 'Failed to create checkout session');
 export const confirmPayment = (data) => handler(() => api.post('/api/payments/confirm', data), 'Failed to confirm payment');
 export const deletePayment = (id) => handler(() => api.delete(`/api/payments/${id}`), 'Failed to delete payment');
-export const verifyPaymentSession = (sessionId) => handler(() => api.get(`/api/payments/session/${sessionId}`), 'Failed to verify session');
-export const getEmployeeAssets = () => handler(() => api.get('/api/employee-assets'), 'Failed to fetch employee assets');
+export const verifyPaymentSession = (sessionId) => handler(() => api.get(`/payment-success?session_id=${sessionId}`), 'Failed to verify session');
+export const getEmployeeAssets = (search = '', type = '') => handler(() => api.get(`/api/employee-assets?search=${encodeURIComponent(search)}&type=${encodeURIComponent(type)}`), 'Failed to fetch employee assets');
 export const deleteEmployeeAsset = (id) => handler(() => api.delete(`/api/employee-assets/${id}`), 'Failed to delete asset');
 export const getMyTeam = () => handler(() => api.get('/api/my-team'), 'Failed to fetch team members');
 export const createRequest = (data) => handler(() => api.post('/api/requests', data), 'Failed to create request');

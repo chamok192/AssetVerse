@@ -1,20 +1,7 @@
 import axios from 'axios';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
-import { auth } from '../FireBase/firebase.init';
 
 const imageHostKey = import.meta.env.VITE_image_host_api_key;
 const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-
-const errors = {
-    'auth/user-not-found': 'No account found with this email',
-    'auth/wrong-password': 'Incorrect password',
-    'auth/invalid-email': 'Invalid email format',
-    'auth/invalid-credential': 'Invalid email or password',
-    'auth/email-already-in-use': 'This email is already registered',
-    'auth/weak-password': 'Password must be at least 6 characters'
-};
-
-const getError = (code) => errors[code] || 'Operation failed';
 
 export const validateEmail = (e) => e?.includes('@');
 export const validatePassword = (p) => p?.length >= 6;
@@ -27,21 +14,28 @@ export const getFieldError = (name, value, touched) => {
     return '';
 };
 
-const fileToBase64 = (file) => new Promise((r, e) => {
-    const reader = new FileReader();
-    reader.onloadend = () => r(reader.result.split(',')[1]);
-    reader.onerror = e;
-    reader.readAsDataURL(file);
-});
+export const checkEmailExists = async (email) => {
+    try {
+        const res = await axios.get(`${apiBase}/api/users/check-email/${email}`);
+        return res.data.exists;
+    } catch {
+        return false;
+    }
+};
 
 export const uploadImageToImgBB = async (file) => {
-    if (!file || !imageHostKey) return { success: false, error: 'Image config missing' };
     try {
         const formData = new FormData();
-        formData.append('image', await fileToBase64(file));
+        formData.append('image', file);
         const res = await axios.post(`https://api.imgbb.com/1/upload?key=${imageHostKey}`, formData);
-        return res.data?.data?.url ? { success: true, url: res.data.data.url } : { success: false, error: 'Upload failed' };
-    } catch { return { success: false, error: 'Upload failed' }; }
+        if (res.data?.success) {
+            return { success: true, url: res.data.data.url };
+        } else {
+            return { success: false, error: 'Upload failed' };
+        }
+    } catch (e) {
+        return { success: false, error: e.message || 'Upload failed' };
+    }
 };
 
 const saveUser = (user) => {
@@ -51,61 +45,35 @@ const saveUser = (user) => {
 
 export const loginWithEmail = async (email, password) => {
     try {
-        const { user: fbUser } = await signInWithEmailAndPassword(auth, email, password);
-
-        const tokenRes = await axios.post(`${apiBase}/api/auth/login`, { email, uid: fbUser.uid }).catch(() => ({}));
-        const token = tokenRes.data?.token;
-        const backendUser = tokenRes.data?.user;
-
-        if (!backendUser) {
-            return { success: false, error: 'User account not found. Please register first.' };
+        const res = await axios.post(`${apiBase}/api/auth/login`, { email, password });
+        if (!res.data?.token) {
+            return { success: false, error: 'Login failed' };
         }
 
-        if (token) {
-            localStorage.setItem('token', token);
-            sessionStorage.setItem('token', token);
-        }
-
-        let role = backendUser.role || 'Employee';
-
-        // Normalize role to proper format: "HR" or "Employee"
-        if (typeof role === 'string') {
-            const roleLower = role.toLowerCase();
-            if (roleLower === 'hr') {
-                role = 'HR';
-            } else if (roleLower === 'employee') {
-                role = 'Employee';
-            } else {
-                role = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
-            }
-        }
+        const user = res.data.user;
+        const role = user.role || 'Employee';
+        const normalizedRole = typeof role === 'string' ? (role.toLowerCase() === 'hr' ? 'HR' : 'Employee') : 'Employee';
 
         const userData = {
-            uid: fbUser.uid,
-            email: fbUser.email,
-            displayName: fbUser.displayName || backendUser.name || '',
-            name: backendUser.name || fbUser.displayName || '',
-            profileImage: fbUser.photoURL || backendUser.profileImage || '',
-            role: role,
-            ...backendUser
+            ...user,
+            role: normalizedRole
         };
 
+        localStorage.setItem('token', res.data.token);
+        sessionStorage.setItem('token', res.data.token);
         saveUser(userData);
-        return { success: true, user: fbUser, userData };
+        return { success: true, userData };  
     } catch (e) {
-        return { success: false, error: getError(e.code) };
+        return { success: false, error: e.response?.data?.error || 'Login failed' };
     }
 };
 
 const registerUser = async (data, role, extraFields = {}) => {
     try {
-        const { user: fbUser } = await createUserWithEmailAndPassword(auth, data.email, data.password);
-        await updateProfile(fbUser, { displayName: data.name, photoURL: data.profileImage || '' });
-
         const userData = {
-            uid: fbUser.uid,
             name: data.name,
             email: data.email,
+            password: data.password,
             profileImage: data.profileImage || '',
             dateOfBirth: data.dateOfBirth || '',
             role: role,
@@ -114,22 +82,23 @@ const registerUser = async (data, role, extraFields = {}) => {
 
         const res = await axios.post(`${apiBase}/api/users`, userData);
         if (!res.data?.success) {
-            throw new Error('Failed to save user to database');
+            throw new Error(res.data?.error || 'Failed to register');
         }
 
-        // Get JWT token from backend after successful registration
-        const tokenRes = await axios.post(`${apiBase}/api/auth/login`, { email: data.email, uid: fbUser.uid }).catch(() => ({}));
-        const token = tokenRes.data?.token;
+        // Then login to get token
+        const loginRes = await axios.post(`${apiBase}/api/auth/login`, { email: data.email, password: data.password });
+        const token = loginRes.data?.token;
 
         if (token) {
             localStorage.setItem('token', token);
             sessionStorage.setItem('token', token);
         }
 
-        saveUser(userData);
-        return { success: true, user: fbUser, userData };
+        const user = loginRes.data.user;
+        saveUser(user);
+        return { success: true, userData: user };
     } catch (e) {
-        return { success: false, error: getError(e.code) || e.message || 'Registration failed' };
+        return { success: false, error: e.message || 'Registration failed' };
     }
 };
 
@@ -141,16 +110,16 @@ export const registerHRManager = async (data) => {
     const extraFields = {
         companyName: data.companyName || '',
         companyLogo: data.companyLogo || '',
-        packageLimit: parseInt(data.packageLimit) || 3,
+        packageLimit: parseInt(data.packageLimit) || 5,
         currentEmployees: 0,
-        subscription: data.subscription || 'free'
+        subscription: data.subscription || 'basic'
     };
     return registerUser(data, 'HR', extraFields);
 };
 
 export const logoutUser = async () => {
     try {
-        await signOut(auth);
+        // Clear all stored authentication data
         localStorage.removeItem('token');
         sessionStorage.removeItem('token');
         localStorage.removeItem('userData');

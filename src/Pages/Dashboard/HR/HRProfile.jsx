@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { auth } from "../../../FireBase/firebase.init";
 import { updateUserProfile, getUserByEmail } from "../../../Services/api";
 import { uploadImageToImgBB } from "../../../Auth/authService";
 import DashboardLayout from "./DashboardLayout";
+import { useAuth } from "../../../Contents/AuthContext/useAuth";
 
 const HRProfile = () => {
     const navigate = useNavigate();
+    const { user: authUser } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -31,23 +32,22 @@ const HRProfile = () => {
         const loadProfile = async () => {
             try {
                 setLoading(true);
-                const currentUser = auth.currentUser;
-                if (!currentUser) {
+                if (!authUser?.email) {
                     navigate("/login");
                     return;
                 }
 
                 const userData = JSON.parse(localStorage.getItem("userData")) || {};
-                const result = await getUserByEmail(currentUser.email);
+                const result = await getUserByEmail(authUser.email);
 
                 if (result.success && result.data) {
                     setProfile(result.data);
                     setForm({
-                        name: result.data.name || currentUser.displayName || "",
-                        email: result.data.email || currentUser.email || "",
+                        name: result.data.name || authUser.name || "",
+                        email: result.data.email || authUser.email || "",
                         companyName: result.data.companyName || userData.companyName || "",
                         companyLogo: result.data.companyLogo || userData.companyLogo || "",
-                        profileImage: result.data.profileImage || currentUser.photoURL || "",
+                        profileImage: result.data.profileImage || authUser.profileImage || "",
                         packageLimit: result.data.packageLimit || userData.packageLimit || 0,
                         currentEmployees: result.data.currentEmployees || userData.currentEmployees || 0,
                         subscription: result.data.subscription || userData.subscription || null,
@@ -56,11 +56,11 @@ const HRProfile = () => {
                 } else {
                     setProfile(userData);
                     setForm({
-                        name: userData.name || currentUser.displayName || "",
-                        email: userData.email || currentUser.email || "",
+                        name: userData.name || authUser.name || "",
+                        email: userData.email || authUser.email || "",
                         companyName: userData.companyName || "",
                         companyLogo: userData.companyLogo || "",
-                        profileImage: userData.profileImage || currentUser.photoURL || "",
+                        profileImage: userData.profileImage || authUser.profileImage || "",
                         packageLimit: userData.packageLimit || 0,
                         currentEmployees: userData.currentEmployees || 0,
                         subscription: userData.subscription || null,
