@@ -115,21 +115,22 @@ const Payments = () => {
                                 <th>Date</th>
                                 <th>Package</th>
                                 <th>Amount</th>
-                                <th>Transaction ID</th>
+                                <th className="hidden md:table-cell">Transaction ID</th>
                                 <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {historyLoading && (
                                 <tr>
-                                    <td colSpan={6} className="text-center py-8">
+                                    <td colSpan={5} className="text-center py-8 md:colspan-6">
                                         <span className="loading loading-spinner loading-md"></span>
                                     </td>
                                 </tr>
                             )}
                             {!historyLoading && history.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="text-center py-8 text-base-content/60">
+                                    <td colSpan={5} className="text-center py-8 text-base-content/60 md:colspan-6">
                                         No payments yet.
                                         <a href="/hr/upgrade" className="link link-primary ml-2">
                                             Upgrade your package
@@ -154,7 +155,7 @@ const Payments = () => {
                                     <td className="font-bold text-primary">
                                         ${payment.amount || 0}
                                     </td>
-                                    <td>
+                                    <td className="hidden md:table-cell">
                                         <div className="tooltip" data-tip={payment.transactionId}>
                                             <code className="text-xs bg-base-300 px-3 py-1 rounded font-mono">
                                                 {payment.transactionId?.substring(0, 20)}...

@@ -13,7 +13,6 @@ const PaymentSuccess = () => {
       return;
     }
 
-    // Process and redirect to payments history
     setTimeout(() => {
       navigate('/hr/payments?payment=success&session_id=' + sessionId);
     }, 1500);

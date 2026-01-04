@@ -71,20 +71,18 @@ const AllRequests = () => {
             if (context?.previousRequests) {
                 queryClient.setQueryData(['requests'], context.previousRequests);
             }
-            toast.error('Failed to approve request');
+            const message = err?.message || (typeof err === 'string' ? err : null);
+            if (message && message.includes('limit reached')) {
+                toast.error("Plan limit exceeded. Please upgrade.");
+                navigate('/hr/upgrade');
+            } else {
+                toast.error(message || 'Failed to approve request');
+            }
         },
         onSettled: () => {
             // Ensure assets are refetched
             queryClient.invalidateQueries(['assets']);
             queryClient.invalidateQueries(['available-assets']);
-        },
-        onError: (error) => {
-            if (error.includes('limit reached')) {
-                toast.error("Plan limit exceeded. Please upgrade.");
-                navigate('/hr/upgrade');
-            } else {
-                toast.error(error || 'Failed to approve request');
-            }
         }
     });
 
@@ -128,8 +126,8 @@ const AllRequests = () => {
                         <tr>
                             <th>Employee</th>
                             <th>Asset</th>
-                            <th>Note</th>
-                            <th>Date</th>
+                            <th className="hidden md:table-cell">Note</th>
+                            <th className="hidden lg:table-cell">Date</th>
                             <th>Status</th>
                             <th className="text-right">Actions</th>
                         </tr>
@@ -137,7 +135,7 @@ const AllRequests = () => {
                     <tbody>
                         {isLoading && (
                             <tr>
-                                <td colSpan={6} className="py-6 text-center">
+                                <td colSpan={4} className="py-6 text-center md:colspan-5 lg:colspan-6">
                                     <span className="loading loading-spinner"></span>
                                 </td>
                             </tr>
@@ -145,7 +143,7 @@ const AllRequests = () => {
 
                         {!isLoading && requests.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="py-6 text-center text-base-content/70">
+                                <td colSpan={4} className="py-6 text-center text-base-content/70 md:colspan-5 lg:colspan-6">
                                     No requests found.
                                 </td>
                             </tr>
@@ -165,8 +163,8 @@ const AllRequests = () => {
                                         <p className="text-sm text-base-content/60">Stock: {req.asset?.availableQuantity ?? req.asset?.quantity ?? "N/A"}</p>
                                     </div>
                                 </td>
-                                <td>{req.note || "-"}</td>
-                                <td>{req.createdAt ? new Date(req.createdAt).toLocaleDateString() : "-"}</td>
+                                <td className="hidden md:table-cell">{req.note || "-"}</td>
+                                <td className="hidden lg:table-cell">{req.createdAt ? new Date(req.createdAt).toLocaleDateString() : "-"}</td>
                                 <td>
                                     <span className={`badge capitalize ${statusColors[req.status] || "badge-ghost"}`}>
                                         {req.status || "pending"}
@@ -175,7 +173,7 @@ const AllRequests = () => {
                                 <td className="text-right space-x-2">
                                     <button
                                         type="button"
-                                        className="btn btn-sm"
+                                        className="btn btn-xs sm:btn-sm"
                                         onClick={() => handleApprove(req._id)}
                                         disabled={req.status === "accepted" || approveMutation.isPending || rejectMutation.isPending || !limitData?.canAdd}
                                     >
@@ -183,7 +181,7 @@ const AllRequests = () => {
                                     </button>
                                     <button
                                         type="button"
-                                        className="btn btn-sm btn-outline"
+                                        className="btn btn-xs sm:btn-sm btn-outline"
                                         onClick={() => handleReject(req._id)}
                                         disabled={req.status === "rejected" || approveMutation.isPending || rejectMutation.isPending}
                                     >

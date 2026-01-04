@@ -23,7 +23,6 @@ const PrivateRoute = ({ children, requiredRole }) => {
 
         checkAuth();
 
-        // Listen for storage changes
         const handleStorage = () => checkAuth();
         window.addEventListener('storage', handleStorage);
         return () => window.removeEventListener('storage', handleStorage);

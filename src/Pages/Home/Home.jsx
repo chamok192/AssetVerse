@@ -10,7 +10,7 @@ import ContactCTA from '../Shared/ContactCTA/ContactCTA';
 
 const Home = () => (
     <div className="w-full">
-        <Banner/><FeatureCards/><Features/><About/><Packages/><Testimonials/><HowItWorks/><FAQ/><ContactCTA/>
+        <Banner /><FeatureCards /><Features /><About /><Packages /><Testimonials /><HowItWorks /><FAQ /><ContactCTA />
     </div>
 );
 

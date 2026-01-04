@@ -12,7 +12,6 @@ const Packages = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    // Fetch packages from the server
     const { data: packages = [], isLoading } = useQuery({
         queryKey: ['packages'],
         queryFn: async () => {
@@ -36,11 +35,6 @@ const Packages = () => {
         }
     };
 
-    if (isLoading) {
-        return <div className="flex justify-center py-20"><span className="loading loading-spinner loading-lg"></span></div>;
-    }
-
-    // Sort packages by price
     const sortedPackages = [...packages].sort((a, b) => a.price - b.price);
 
     return (
@@ -63,10 +57,8 @@ const Packages = () => {
 
                 <div className="grid gap-8 md:grid-cols-3 lg:gap-6">
                     {sortedPackages.map((pkg, idx) => {
-                        // Determine if this package is the active plan. 
-                        // Note: pkg.id is used for comparison as per database schema
                         const isActive = activePackage === (pkg.id || pkg.name.toLowerCase());
-                        const isRecommended = pkg.name.toLowerCase() === 'standard'; // Or use logic based on popularity if available
+                        const isRecommended = pkg.name.toLowerCase() === 'standard';
 
                         return (
                             <MotionDiv

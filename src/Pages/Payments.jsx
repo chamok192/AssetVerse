@@ -18,7 +18,6 @@ const Payments = () => {
         }
     });
 
-    // Verify session and process payment if needed
     useEffect(() => {
         if (!sessionId || isVerifying) return;
         
@@ -28,10 +27,8 @@ const Payments = () => {
                 const result = await verifyPaymentSession(sessionId);
                 
                 if (result.success) {
-                    // Wait a bit and refetch payment history
                     await new Promise(resolve => setTimeout(resolve, 500));
                     await refetch();
-                    // Clear session_id from URL but keep payment=success
                     setSearchParams({ payment: 'success' });
                 }
             } catch (error) {
@@ -44,7 +41,6 @@ const Payments = () => {
         verifyAndRefetch();
     }, [sessionId, isVerifying, refetch, setSearchParams]);
 
-    // Auto-hide notification after 5 seconds
     useEffect(() => {
         if (!showSuccessNotification) return;
         

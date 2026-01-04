@@ -88,7 +88,7 @@ const About = () => {
                     transition={{ duration: 0.6, delay: 0.4 }}
                     className="mt-12 text-center"
                 >
-                    <div className="inline-flex items-center gap-8 bg-white rounded-2xl px-8 py-6 shadow-md">
+                    <div className="flex flex-col items-center gap-8 md:flex-row justify-center bg-white rounded-2xl px-8 py-6 shadow-md ">
                         <div className="text-center">
                             <p className="text-4xl font-bold text-slate-900">500+</p>
                             <p className="text-sm text-slate-600 mt-1">Organizations</p>

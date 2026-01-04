@@ -80,16 +80,15 @@ const EmployeeList = () => {
                 toast.error(res.error || 'Failed to assign asset');
             }
         },
-        onError: () => {
-            toast.error('Failed to assign asset');
+        onError: (err) => {
+            toast.error(err?.message || 'Failed to assign asset');
             // Let settled invalidation refresh correct values
         },
         onSettled: () => {
             // Ensure assets list is refetched to reflect latest quantities
             queryClient.invalidateQueries(['assets']);
             queryClient.invalidateQueries(['available-assets']);
-        },
-        onError: (err) => toast.error(err.message || 'Failed to assign asset')
+        }
     });
 
     // Fetch all assets
@@ -148,16 +147,16 @@ const EmployeeList = () => {
                         <tr>
                             <th>Photo</th>
                             <th>Name</th>
-                            <th>Email</th>
-                            <th>Join Date</th>
-                            <th>Assets Count</th>
+                            <th className="hidden sm:table-cell">Email</th>
+                            <th className="hidden md:table-cell">Join Date</th>
+                            <th className="hidden lg:table-cell">Assets Count</th>
                             <th className="text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading && (
                             <tr>
-                                <td colSpan={6} className="py-6 text-center">
+                                <td colSpan={3} className="py-6 text-center sm:colspan-4 md:colspan-5 lg:colspan-6">
                                     <span className="loading loading-spinner"></span>
                                 </td>
                             </tr>
@@ -165,7 +164,7 @@ const EmployeeList = () => {
 
                         {!isLoading && employees.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="py-6 text-center text-base-content/70">
+                                <td colSpan={3} className="py-6 text-center text-base-content/70 sm:colspan-4 md:colspan-5 lg:colspan-6">
                                     No employees found.
                                 </td>
                             </tr>
@@ -184,20 +183,20 @@ const EmployeeList = () => {
                                     </div>
                                 </td>
                                 <td className="font-semibold">{employee.name || "Unknown"}</td>
-                                <td>{employee.email || "-"}</td>
-                                <td>{employee.affiliationDate ? new Date(employee.affiliationDate).toLocaleDateString() : "-"}</td>
-                                <td>{employee.assetsCount ?? employee.assets?.length ?? 0}</td>
+                                <td className="hidden sm:table-cell">{employee.email || "-"}</td>
+                                <td className="hidden md:table-cell">{employee.affiliationDate ? new Date(employee.affiliationDate).toLocaleDateString() : "-"}</td>
+                                <td className="hidden lg:table-cell">{employee.assetsCount ?? employee.assets?.length ?? 0}</td>
                                 <td className="text-right flex gap-2 justify-end">
                                     <button
                                         type="button"
-                                        className="btn btn-sm btn-primary btn-outline"
+                                        className="btn btn-xs sm:btn-sm btn-primary btn-outline"
                                         onClick={() => setAssigningTo(employee)}
                                     >
                                         Assign Asset
                                     </button>
                                     <button
                                         type="button"
-                                        className="btn btn-sm btn-outline btn-error"
+                                        className="btn btn-xs sm:btn-sm btn-outline btn-error"
                                         onClick={() => handleRemove(employee._id)}
                                         disabled={removingId === employee._id || removeEmployeeMutation.isPending}
                                     >
@@ -234,7 +233,7 @@ const EmployeeList = () => {
             {/* Assignment Modal */}
             {assigningTo && (
                 <div className="modal modal-open">
-                    <div className="modal-box max-w-lg">
+                    <div className="modal-box max-w-sm sm:max-w-md md:max-w-lg">
                         <h3 className="text-lg font-bold">Assign Asset to {assigningTo.name}</h3>
                         <p className="py-4 text-sm text-base-content/70">
                             Select an available asset from your inventory to assign directly to this employee.

@@ -10,7 +10,6 @@ const UpgradePackage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { user, load } = useAuth();
 
-    // Fetch packages from database
     const { data: packages = [], isLoading: packagesLoading } = useQuery({
         queryKey: ['packages'],
         queryFn: async () => {

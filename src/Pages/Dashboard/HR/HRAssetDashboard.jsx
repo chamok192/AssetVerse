@@ -299,9 +299,9 @@ const HRAssetDashboard = () => {
                         <tr>
                             <th>Image</th>
                             <th>Asset</th>
-                            <th>Type</th>
+                            <th className="hidden md:table-cell">Type</th>
                             <th>Quantity</th>
-                            <th>Date Added</th>
+                            <th className="hidden lg:table-cell">Date Added</th>
                             <th className="text-right">Actions</th>
                         </tr>
                     </thead>
@@ -353,12 +353,12 @@ const HRAssetDashboard = () => {
                                         <div className="font-semibold">{assetName}</div>
                                         <div className="text-sm text-base-content/60">{asset.serial || asset.tag || ""}</div>
                                     </td>
-                                    <td>
+                                    <td className="hidden md:table-cell">
                                         <span className="badge badge-soft badge-primary capitalize">{assetType}</span>
                                     </td>
                                     <td className={`font-semibold ${qtyColor}`}>{available}</td>
 
-                                    <td>{asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : "-"}</td>
+                                    <td className="hidden lg:table-cell">{asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : "-"}</td>
                                     <td className="space-x-2 text-right">
                                         <button
                                             type="button"

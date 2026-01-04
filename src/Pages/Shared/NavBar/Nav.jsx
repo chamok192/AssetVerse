@@ -15,9 +15,9 @@ const Nav = () => {
     const [profile, setProfile] = useState(false);
     const location = useLocation();
 
-    useEffect(() => { 
+    useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setMobile(false); setProfile(false); 
+        setMobile(false); setProfile(false);
     }, [location.pathname]);
 
     const close = () => { setMobile(false); setProfile(false); };
