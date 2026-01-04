@@ -100,7 +100,7 @@ const HRManager = () => {
     return (
         <div className="min-h-screen bg-base-200 flex items-center justify-center px-4 py-12 overflow-x-hidden">
             <div className="w-full max-w-6xl grid md:grid-cols-[1.35fr_1fr] gap-6 md:gap-8 lg:gap-10">
-                <div className="bg-base-100 rounded-2xl shadow-xl p-8 lg:p-10 space-y-6">
+                <div className="bg-base-100 rounded-2xl shadow-xl p-4 sm:p-8 lg:p-10 space-y-6">
                     <div className="space-y-2">
                         <p className="text-sm uppercase tracking-wide text-primary">Join as HR Manager</p>
                         <h1 className="text-3xl font-bold">Register your company</h1>
@@ -139,7 +139,7 @@ const HRManager = () => {
                     </form>
                 </div>
                 <div className="hidden md:flex items-center justify-center">
-                    <div className="relative overflow-hidden rounded-2xl shadow-2xl bg-linear-to-br from-gray-700 via-black to-black text-white w-full h-full min-h-[560px] p-8 lg:p-10 flex flex-col justify-between">
+                        <div className="relative overflow-hidden rounded-2xl shadow-2xl bg-linear-to-br from-gray-700 via-black to-black text-white w-full h-full min-h-[560px] p-4 sm:p-8 lg:p-10 flex flex-col justify-between">
                         <div className="space-y-4">
                             <p className="text-sm uppercase tracking-[0.2em] font-semibold">AssetVerse</p>
                             <h2 className="text-3xl font-extrabold leading-tight">Manage your team's assets effortlessly.</h2>

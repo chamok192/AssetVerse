@@ -88,10 +88,10 @@ const EmployeeAssets = () => {
                             <tr className="bg-base-200">
                                 <th>Image</th>
                                 <th>Name</th>
-                                <th>Type</th>
-                                <th>Company</th>
-                                <th>Request Date</th>
-                                <th>Approval Date</th>
+                                <th className="hidden sm:table-cell">Type</th>
+                                <th className="hidden md:table-cell">Company</th>
+                                <th className="hidden lg:table-cell">Request Date</th>
+                                <th className="hidden lg:table-cell">Approval Date</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -119,10 +119,10 @@ const EmployeeAssets = () => {
                                             />
                                         </td>
                                         <td className="font-medium">{assetName}</td>
-                                        <td className="capitalize">{assetType}</td>
-                                        <td>{companyName}</td>
-                                        <td>{requestDate ? new Date(requestDate).toLocaleDateString() : 'N/A'}</td>
-                                        <td>{approvalDate ? new Date(approvalDate).toLocaleDateString() : 'N/A'}</td>
+                                        <td className="hidden sm:table-cell capitalize">{assetType}</td>
+                                        <td className="hidden md:table-cell">{companyName}</td>
+                                        <td className="hidden lg:table-cell">{requestDate ? new Date(requestDate).toLocaleDateString() : 'N/A'}</td>
+                                        <td className="hidden lg:table-cell">{approvalDate ? new Date(approvalDate).toLocaleDateString() : 'N/A'}</td>
                                         <td>
                                             <span className={`badge ${status === 'assigned' ? 'badge-success' : 'badge-neutral'
                                                 }`}>
@@ -154,7 +154,7 @@ const EmployeeAssets = () => {
                             })}
                             {assets.length === 0 && (
                                 <tr>
-                                    <td colSpan="8" className="text-center py-8">
+                                    <td colSpan="4" className="text-center py-8 sm:colspan-5 md:colspan-6 lg:colspan-8">
                                         No assets found
                                     </td>
                                 </tr>

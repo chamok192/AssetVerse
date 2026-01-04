@@ -113,7 +113,7 @@ const Payments = () => {
                         <thead>
                             <tr>
                                 <th>Date</th>
-                                <th>Package</th>
+                                <th className="hidden sm:table-cell">Package</th>
                                 <th>Amount</th>
                                 <th className="hidden md:table-cell">Transaction ID</th>
                                 <th>Status</th>
@@ -123,14 +123,14 @@ const Payments = () => {
                         <tbody>
                             {historyLoading && (
                                 <tr>
-                                    <td colSpan={5} className="text-center py-8 md:colspan-6">
+                                    <td colSpan={4} className="text-center py-8 sm:colspan-5 md:colspan-6">
                                         <span className="loading loading-spinner loading-md"></span>
                                     </td>
                                 </tr>
                             )}
                             {!historyLoading && history.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="text-center py-8 text-base-content/60 md:colspan-6">
+                                    <td colSpan={4} className="text-center py-8 text-base-content/60 sm:colspan-5 md:colspan-6">
                                         No payments yet.
                                         <a href="/hr/upgrade" className="link link-primary ml-2">
                                             Upgrade your package
@@ -149,7 +149,7 @@ const Payments = () => {
                                             })
                                             : "—"}
                                     </td>
-                                    <td className="capitalize font-medium">
+                                    <td className="hidden sm:table-cell capitalize font-medium">
                                         {payment.packageName || "Unknown"}
                                     </td>
                                     <td className="font-bold text-primary">
