@@ -61,7 +61,7 @@ const AddAsset = () => {
 
         if (isFormSame && availableQty === newAvailable && imagePreview === imageUrl) return;
 
-        // Defer updates to avoid synchronous setState inside effect
+        
         const id = setTimeout(() => {
             setForm(newForm);
             setAvailableQty(newAvailable);
