@@ -21,12 +21,12 @@ const AuthProvider = ({ children }) => {
                 setUser(userData);
                 localStorage.setItem('userData', JSON.stringify(userData));
             } else {
-                // Keep existing user if fetch fails
+                // Keep user
                 const storedUser = localStorage.getItem('userData');
                 setUser(storedUser ? JSON.parse(storedUser) : null);
             }
         } catch {
-            // Keep existing user if fetch fails
+            // Keep user
             const storedUser = localStorage.getItem('userData');
             setUser(storedUser ? JSON.parse(storedUser) : null);
         } finally {
@@ -42,7 +42,7 @@ const AuthProvider = ({ children }) => {
         refetchProfile();
     }, []);
 
-    // Listen to storage changes
+    // Storage listener
     useEffect(() => {
         const handleStorage = () => {
             const storedUser = localStorage.getItem('userData');

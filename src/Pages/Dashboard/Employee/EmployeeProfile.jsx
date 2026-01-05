@@ -109,7 +109,7 @@ const EmployeeProfile = () => {
             }
 
             const updatedForm = { ...form, profileImage: profileImageUrl };
-            // backend 'updateUserProfile' uses token to identify user, so we don't need to pass ID
+            // No ID required
             const result = await updateUserProfile(updatedForm);
             if (result.success) {
                 setProfile(updatedForm);

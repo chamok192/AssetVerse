@@ -24,7 +24,7 @@ const RequestAsset = () => {
             };
         },
         keepPreviousData: true,
-        // Poll every 5 seconds while the page is visible to get near-real-time counts
+        // Poll counts
         refetchInterval: 5000,
         refetchIntervalInBackground: false
     });
@@ -37,7 +37,7 @@ const RequestAsset = () => {
         onSuccess: () => {
             toast.success('Request submitted successfully!');
             queryClient.invalidateQueries(['requests']);
-            // Also refresh assets so availability shows updated counts soon
+            // Refresh assets
             queryClient.invalidateQueries(['assets']);
             setShowModal(false);
             setNote('');

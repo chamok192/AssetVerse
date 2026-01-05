@@ -22,7 +22,7 @@ const AddAsset = () => {
     const [error, setError] = useState("");
     const [availableQty, setAvailableQty] = useState(0);
 
-    // Fetch asset data if editing
+    // Fetch asset
     const { data: assetData, isLoading: assetLoading } = useQuery({
         queryKey: ['asset', assetId],
         queryFn: async () => {
@@ -36,25 +36,42 @@ const AddAsset = () => {
             }
         },
         enabled: isEdit,
-        // Removed staleTime: Infinity to ensure fresh data
+        // No staleTime
     });
 
-    // Load form data
+    // Load form
     useEffect(() => {
         if (!assetData || !isEdit) return;
 
         const imageUrl = assetData.productImage || assetData.image || "";
-        setForm({
+        const newQuantity = assetData.productQuantity ?? assetData.quantity ?? assetData.availableQuantity ?? 1;
+        const newForm = {
             name: assetData.productName || assetData.name || "",
             image: imageUrl,
             type: assetData.productType || assetData.type || "returnable",
-            quantity: assetData.productQuantity ?? assetData.quantity ?? assetData.availableQuantity ?? 1
-        });
-        setAvailableQty(assetData.availableQuantity ?? 0);
-        setImagePreview(imageUrl);
-    }, [assetData, isEdit]);
+            quantity: newQuantity
+        };
 
-    // Create asset mutation
+        // Compare form
+        const isFormSame = form.name === newForm.name &&
+            form.image === newForm.image &&
+            form.type === newForm.type &&
+            Number(form.quantity) === Number(newForm.quantity);
+        const newAvailable = assetData.availableQuantity ?? 0;
+
+        if (isFormSame && availableQty === newAvailable && imagePreview === imageUrl) return;
+
+        // Defer updates to avoid synchronous setState inside effect
+        const id = setTimeout(() => {
+            setForm(newForm);
+            setAvailableQty(newAvailable);
+            setImagePreview(imageUrl);
+        }, 0);
+
+        return () => clearTimeout(id);
+    }, [assetData, isEdit, form.name, form.image, form.type, form.quantity, availableQty, imagePreview]);
+
+    // Create mutation
     const createMutation = useMutation({
         mutationFn: createAsset,
         onSuccess: () => {
@@ -66,7 +83,7 @@ const AddAsset = () => {
         }
     });
 
-    // Update asset mutation
+    // Update mutation
     const updateMutation = useMutation({
         mutationFn: (payload) => updateAsset(assetId, payload),
         onSuccess: () => {
@@ -112,7 +129,7 @@ const AddAsset = () => {
         e.preventDefault();
         setError("");
 
-        // Check required fields
+        // Validate fields
         if (!form.name.trim()) {
             setError("Asset name is required");
             return;
@@ -132,7 +149,7 @@ const AddAsset = () => {
             return;
         }
 
-        // Upload image if new
+        // Upload image
         if (imageFile) {
             const uploadResult = await uploadImageToImgBB(imageFile);
             if (!uploadResult.success) {

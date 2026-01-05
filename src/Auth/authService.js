@@ -85,7 +85,7 @@ const registerUser = async (data, role, extraFields = {}) => {
             throw new Error(res.data?.error || 'Failed to register');
         }
 
-        // Then login to get token
+        // Login token
         const loginRes = await axios.post(`${apiBase}/api/auth/login`, { email: data.email, password: data.password });
         const token = loginRes.data?.token;
 
@@ -119,7 +119,7 @@ export const registerHRManager = async (data) => {
 
 export const logoutUser = async () => {
     try {
-        // Clear all stored authentication data
+        // Clear auth data
         localStorage.removeItem('token');
         sessionStorage.removeItem('token');
         localStorage.removeItem('userData');

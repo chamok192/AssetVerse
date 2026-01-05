@@ -73,8 +73,8 @@ const HRAssetDashboard = () => {
     }, [assets]);
 
     const filteredAssets = useMemo(() => {
-        // Since we are doing server side pagination/searching, the data 'assets' is already filtered by search/type from the server.
-        // We only apply client side sorting on the current page data for UX responsiveness on the view.
+        // Server pagination
+        // Client sorting
 
         const sorted = [...assets].sort((a, b) => {
             if (sortKey === "date-desc") return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
@@ -88,7 +88,7 @@ const HRAssetDashboard = () => {
             return nameA.localeCompare(nameB);
         });
 
-        // Secondary client-side Category filter (if needed, though ideally should be server too)
+        // Category filter
         if (categoryFilter !== 'all') {
             return sorted.filter(asset => asset.category === categoryFilter);
         }

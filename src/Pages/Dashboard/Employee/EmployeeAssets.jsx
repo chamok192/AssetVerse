@@ -82,8 +82,9 @@ const EmployeeAssets = () => {
                     </button>
                 </div>
 
-                <div className="overflow-x-auto rounded-lg border border-base-300">
-                    <table className="table">
+                {/* Table for sm+ screens */}
+                <div className="hidden sm:block overflow-x-auto rounded-lg border border-base-300">
+                    <table className="table text-sm">
                         <thead>
                             <tr className="bg-base-200">
                                 <th>Image</th>
@@ -154,13 +155,64 @@ const EmployeeAssets = () => {
                             })}
                             {assets.length === 0 && (
                                 <tr>
-                                    <td colSpan="4" className="text-center py-8 sm:colspan-5 md:colspan-6 lg:colspan-8">
+                                    <td colSpan={8} className="text-center py-8">
                                         No assets found
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Card view for small screens */}
+                <div className="block sm:hidden space-y-4">
+                    {assets.length === 0 && (
+                        <div className="text-center py-8 text-base-content/70">No assets found</div>
+                    )}
+
+                    {assets.map(asset => {
+                        const assetName = asset.assetName || 'Unknown Asset';
+                        const assetImage = asset.assetImage || 'https://placehold.co/40';
+                        const assetType = asset.assetType || 'Unknown';
+                        const companyName = asset.companyName || 'Unknown Company';
+                        const requestDate = asset.requestDate;
+                        const approvalDate = asset.assignmentDate;
+                        const status = asset.status || 'assigned';
+
+                        const isReturnable = assetType === 'Returnable' || assetType === 'returnable';
+
+                        return (
+                            <div key={asset._id} className="bg-base-100 rounded-lg shadow p-3">
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-3">
+                                        <img src={assetImage} alt={assetName} className="h-10 w-10 rounded object-cover" onError={(e) => { e.target.src = 'https://placehold.co/40?text=No+Image'; }} />
+                                        <div className="min-w-0">
+                                            <p className="font-semibold truncate">{assetName}</p>
+                                            <p className="text-xs text-base-content/60 truncate">{assetType} • {companyName}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-xs text-base-content/60">{requestDate ? new Date(requestDate).toLocaleDateString() : 'N/A'}</div>
+                                        <div className="text-xs text-base-content/60">{approvalDate ? new Date(approvalDate).toLocaleDateString() : 'N/A'}</div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                        <span className={`badge ${status === 'assigned' ? 'badge-success' : 'badge-neutral'}`}>{status === 'assigned' ? 'Approved' : status}</span>
+                                    </div>
+
+                                    <div className="mt-2 flex flex-col gap-2">
+                                        {isReturnable && status === 'assigned' && (
+                                            <button onClick={() => handleReturn(asset._id)} className="btn btn-sm btn-error w-full">Return</button>
+                                        )}
+                                        {!isReturnable && status === 'assigned' && (
+                                            <button onClick={() => handleDelete(asset._id)} className="btn btn-sm btn-outline btn-error w-full">Delete</button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </EmployeeDashboardLayout>

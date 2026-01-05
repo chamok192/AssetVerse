@@ -98,12 +98,12 @@ const HRManager = () => {
     };
 
     return (
-        <div className="min-h-screen bg-base-200 flex items-center justify-center px-4 py-12 overflow-x-hidden">
+        <div className="min-h-screen bg-base-200 flex items-center justify-center px-3 py-8 sm:px-4 sm:py-12 overflow-x-hidden">
             <div className="w-full max-w-6xl grid md:grid-cols-[1.35fr_1fr] gap-6 md:gap-8 lg:gap-10">
-                <div className="bg-base-100 rounded-2xl shadow-xl p-4 sm:p-8 lg:p-10 space-y-6">
+                <div className="bg-base-100 rounded-2xl shadow-xl p-3 sm:p-8 lg:p-10 space-y-4 sm:space-y-6">
                     <div className="space-y-2">
                         <p className="text-sm uppercase tracking-wide text-primary">Join as HR Manager</p>
-                        <h1 className="text-3xl font-bold">Register your company</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold">Register your company</h1>
                         <p className="text-sm text-base-content/70">Set up your company profile and admin credentials to manage assets and employees.</p>
                     </div>
                     <form onSubmit={submit} className="space-y-6">
@@ -115,20 +115,20 @@ const HRManager = () => {
                         <label className="form-control w-full">
                             <div className="label"><span className="label-text font-semibold">Upload profile image</span></div>
                             <input name="profileImageFile" onChange={upProf} type="file" accept="image/*" className="file-input file-input-bordered file-input-primary w-full" />
-                            <div className="label"><span className="label-text-alt">We will upload to ImgBB and store the URL.</span></div>
+                            <div className="label"><span className="label-text-alt break-words text-xs">We will upload to ImgBB and store the URL.</span></div>
                         </label>
-                        {profPrev && <div className="p-4 bg-base-200 rounded-lg flex items-center justify-center"><img src={profPrev} alt="Profile" className="w-24 h-24 rounded-full object-cover" onError={() => setProfPrev('')} /></div>}
+                        {profPrev && <div className="p-4 bg-base-200 rounded-lg flex items-center justify-center"><img src={profPrev} alt="Profile" className="w-16 h-16 sm:w-24 sm:h-24 rounded-full object-cover" onError={() => setProfPrev('')} /></div>}
                         <div className="divider my-2">Company Details</div>
                         <Input name="companyName" value={form.companyName} onChange={change} onBlur={blur} error={getErr('companyName')} placeholder="Your Company Ltd." label="Company Name" />
                         <label className="form-control w-full">
                             <div className="label"><span className="label-text font-semibold">Upload company logo</span></div>
                             <input name="companyLogoFile" onChange={upLogo} type="file" accept="image/*" className="file-input file-input-bordered file-input-primary w-full" />
-                            <div className="label"><span className="label-text-alt">We will upload to ImgBB and store the URL.</span></div>
+                            <div className="label"><span className="label-text-alt break-words text-xs">We will upload to ImgBB and store the URL.</span></div>
                         </label>
-                        {logoPrev && <div className="p-4 bg-base-200 rounded-lg flex items-center justify-center"><img src={logoPrev} alt="Logo" className="max-h-20 object-contain" onError={() => setLogoPrev('')} /></div>}
+                        {logoPrev && <div className="p-4 bg-base-200 rounded-lg flex items-center justify-center"><img src={logoPrev} alt="Logo" className="max-h-12 sm:max-h-20 object-contain" onError={() => setLogoPrev('')} /></div>}
                         <div className="divider my-2">Auto-Assigned Plan</div>
-                        <div className="grid grid-cols-3 gap-4 text-sm">
-                            <div className="p-4 bg-base-200 rounded-lg"><p className="font-semibold">Role</p><p className="text-base-content/70">{form.role === 'hr' ? 'HR Manager' : form.role}</p></div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                            <div className="p-4 bg-base-200 rounded-lg break-words"><p className="font-semibold">Role</p><p className="text-base-content/70">{form.role === 'hr' ? 'HR Manager' : form.role}</p></div>
                             <div className="p-4 bg-base-200 rounded-lg"><p className="font-semibold">Package Limit</p><p className="text-base-content/70">{form.packageLimit} employees</p></div>
                             <div className="p-4 bg-base-200 rounded-lg"><p className="font-semibold">Plan</p><p className="text-base-content/70">{form.subscription}</p></div>
                         </div>

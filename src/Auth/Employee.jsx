@@ -96,12 +96,12 @@ const Employee = () => {
     };
 
     return (
-        <div className="min-h-screen bg-base-200 flex items-center justify-center px-4 py-12 overflow-x-hidden">
+        <div className="min-h-screen bg-base-200 flex items-center justify-center px-3 py-8 sm:px-4 sm:py-12 overflow-x-hidden">
             <div className="w-full max-w-6xl grid md:grid-cols-2 gap-6 md:gap-8 lg:gap-10">
-                <div className="bg-base-100 rounded-2xl shadow-xl p-4 sm:p-8 lg:p-10 space-y-6">
+                <div className="bg-base-100 rounded-2xl shadow-xl p-3 sm:p-8 lg:p-10 space-y-4 sm:space-y-6">
                     <div className="space-y-2">
                         <p className="text-sm uppercase tracking-wide text-primary">Join as Employee</p>
-                        <h1 className="text-3xl font-bold">Create your employee account</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold">Create your employee account</h1>
                         <p className="text-sm text-base-content/70">Use your personal email. Company affiliation will be handled after registration.</p>
                     </div>
                     <form onSubmit={submit} className="space-y-6">
@@ -112,9 +112,9 @@ const Employee = () => {
                         <label className="form-control w-full">
                             <div className="label"><span className="label-text font-semibold">Upload profile image</span></div>
                             <input name="profileImageFile" onChange={upFile} type="file" accept="image/*" className="file-input file-input-bordered file-input-primary w-full" />
-                            <div className="label"><span className="label-text-alt">We will upload to ImgBB and store the URL.</span></div>
+                            <div className="label"><span className="label-text-alt break-words text-xs">We will upload to ImgBB and store the URL.</span></div>
                         </label>
-                        {preview && <div className="p-3 bg-base-200 rounded-lg flex items-center justify-center"><img src={preview} alt="Profile preview" className="w-20 h-20 rounded-full object-cover" onError={() => setPreview('')} /></div>}
+                        {preview && <div className="p-3 bg-base-200 rounded-lg flex items-center justify-center"><img src={preview} alt="Profile preview" className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover" onError={() => setPreview('')} /></div>}
                         <label className="form-control w-full"><div className="label"><span className="label-text font-semibold">Role</span></div><input name="role" value={form.role} disabled className="input input-bordered w-full bg-base-200" /></label>
                         {err && <p className="text-error text-sm font-semibold">{err}</p>}
                         {suc && <p className="text-success text-sm font-semibold">{suc}</p>}

@@ -32,21 +32,21 @@ const AllRequests = () => {
 
     const approveMutation = useMutation({
         mutationFn: (id) => updateRequest(id, { status: 'accepted' }),
-        // Optimistic update: decrement the asset availability in cache
+        // Optimistic update
         onMutate: async (requestId) => {
             await queryClient.cancelQueries(['requests']);
             const previousRequests = queryClient.getQueryData(['requests']);
 
-            // Find the request to extract assetId
+            // Find request
             const reqList = Array.isArray(previousRequests) ? previousRequests : (previousRequests?.data || previousRequests);
             const requestObj = Array.isArray(reqList) ? reqList.find(r => String(r._id) === String(requestId)) : null;
             const assetId = requestObj?.assetId;
 
             if (assetId) {
-                // Decrement matching asset's availableQuantity across all assets queries
+                // Decrement asset qty
                 queryClient.setQueriesData({ predicate: d => d.queryKey && d.queryKey[0] === 'assets' }, (old) => {
                     if (!old) return old;
-                    // old may be an object with data field or an array
+                    // Handle old shape
                     if (Array.isArray(old)) return old.map(a => a._id === assetId ? { ...a, availableQuantity: Math.max(0, (a.availableQuantity ?? a.quantity ?? 0) - 1) } : a);
                     if (old.data && Array.isArray(old.data)) {
                         return { ...old, data: old.data.map(a => a._id === assetId ? { ...a, availableQuantity: Math.max(0, (a.availableQuantity ?? a.quantity ?? 0) - 1) } : a) };
@@ -58,7 +58,7 @@ const AllRequests = () => {
             return { previousRequests };
         },
         onSuccess: () => {
-            // Ensure all relevant lists are refetched
+            // Refetch lists
             queryClient.invalidateQueries(['requests']);
             queryClient.invalidateQueries(['employees']);
             queryClient.invalidateQueries(['assets']);
@@ -67,7 +67,7 @@ const AllRequests = () => {
             toast.success('Request approved successfully!');
         },
         onError: (err, variables, context) => {
-            // Rollback requests if needed
+            // Rollback requests
             if (context?.previousRequests) {
                 queryClient.setQueryData(['requests'], context.previousRequests);
             }
@@ -80,7 +80,7 @@ const AllRequests = () => {
             }
         },
         onSettled: () => {
-            // Ensure assets are refetched
+            // Refetch assets
             queryClient.invalidateQueries(['assets']);
             queryClient.invalidateQueries(['available-assets']);
         }
@@ -120,22 +120,22 @@ const AllRequests = () => {
                     </button>
                 </div>
             )}
-            <div className="overflow-x-auto rounded-box bg-base-100 shadow">
-                <table className="table">
+            <div className="hidden sm:block max-[520px]:hidden overflow-x-auto rounded-box bg-base-100 shadow">
+                <table className="table text-xs sm:text-sm">
                     <thead>
                         <tr>
                             <th>Employee</th>
                             <th>Asset</th>
                             <th className="hidden md:table-cell">Note</th>
                             <th className="hidden lg:table-cell">Date</th>
-                            <th>Status</th>
+                            <th className="hidden sm:table-cell">Status</th>
                             <th className="text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading && (
                             <tr>
-                                <td colSpan={4} className="py-6 text-center md:colspan-5 lg:colspan-6">
+                                <td colSpan={6} className="py-6 text-center">
                                     <span className="loading loading-spinner"></span>
                                 </td>
                             </tr>
@@ -143,7 +143,7 @@ const AllRequests = () => {
 
                         {!isLoading && requests.length === 0 && (
                             <tr>
-                                <td colSpan={4} className="py-6 text-center text-base-content/70 md:colspan-5 lg:colspan-6">
+                                <td colSpan={6} className="py-6 text-center text-base-content/70">
                                     No requests found.
                                 </td>
                             </tr>
@@ -153,45 +153,100 @@ const AllRequests = () => {
                             <tr key={req._id} className="hover">
                                 <td>
                                     <div>
-                                        <p className="font-semibold">{req.employee?.name || "Unknown"}</p>
-                                        <p className="text-sm text-base-content/60">{req.employee?.email}</p>
+                                        <p className="font-semibold truncate">{req.employee?.name || "Unknown"}</p>
+                                        <p className="text-sm text-base-content/60 truncate hidden sm:block">{req.employee?.email}</p>
                                     </div>
                                 </td>
                                 <td>
                                     <div>
-                                        <p className="font-semibold">{req.asset?.productName || req.assetName || "Asset"}</p>
-                                        <p className="text-sm text-base-content/60">Stock: {req.asset?.availableQuantity ?? req.asset?.quantity ?? "N/A"}</p>
+                                        <p className="font-semibold truncate">{req.asset?.productName || req.assetName || "Asset"}</p>
+                                        <p className="text-sm text-base-content/60 hidden sm:block">Stock: {req.asset?.availableQuantity ?? req.asset?.quantity ?? "N/A"}</p>
                                     </div>
                                 </td>
                                 <td className="hidden md:table-cell">{req.note || "-"}</td>
                                 <td className="hidden lg:table-cell">{req.createdAt ? new Date(req.createdAt).toLocaleDateString() : "-"}</td>
-                                <td>
+                                <td className="hidden sm:table-cell">
                                     <span className={`badge capitalize ${statusColors[req.status] || "badge-ghost"}`}>
                                         {req.status || "pending"}
                                     </span>
                                 </td>
-                                <td className="text-right space-x-2">
-                                    <button
-                                        type="button"
-                                        className="btn btn-xs sm:btn-sm"
-                                        onClick={() => handleApprove(req._id)}
-                                        disabled={req.status === "accepted" || approveMutation.isPending || rejectMutation.isPending || !limitData?.canAdd}
-                                    >
-                                        Approve
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="btn btn-xs sm:btn-sm btn-outline"
-                                        onClick={() => handleReject(req._id)}
-                                        disabled={req.status === "rejected" || approveMutation.isPending || rejectMutation.isPending}
-                                    >
-                                        Reject
-                                    </button>
+                                <td className="text-right">
+                                    <div className="flex flex-col items-end space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
+                                        <button
+                                            type="button"
+                                            className="btn btn-xs sm:btn-sm w-full sm:w-auto"
+                                            onClick={() => handleApprove(req._id)}
+                                            disabled={req.status === "accepted" || approveMutation.isPending || rejectMutation.isPending || !limitData?.canAdd}
+                                        >
+                                            Approve
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-xs sm:btn-sm btn-outline w-full sm:w-auto"
+                                            onClick={() => handleReject(req._id)}
+                                            disabled={req.status === "rejected" || approveMutation.isPending || rejectMutation.isPending}
+                                        >
+                                            Reject
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Card view for small screens */}
+            <div className="block sm:hidden max-[520px]:block space-y-4">
+                {isLoading && (
+                    <div className="py-6 text-center"><span className="loading loading-spinner"></span></div>
+                )}
+
+                {!isLoading && requests.length === 0 && (
+                    <div className="py-6 text-center text-base-content/70">No requests found.</div>
+                )}
+
+                {!isLoading && requests.map((req) => (
+                    <div key={req._id} className="bg-base-100 rounded-lg shadow p-4">
+                        <div className="flex flex-col gap-2">
+                            <div className="min-w-0">
+                                <p className="font-semibold truncate">{req.employee?.name || "Unknown"}</p>
+                                <p className="text-xs text-base-content/60 truncate">{req.employee?.email}</p>
+                            </div>
+
+                            <div>
+                                <p className="mt-1 font-semibold truncate">{req.asset?.productName || req.assetName || "Asset"}</p>
+                                <p className="text-xs text-base-content/60 truncate">{req.note || "-"}</p>
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className={`badge capitalize ${statusColors[req.status] || "badge-ghost"}`}>{req.status || "pending"}</span>
+                                    <div className="text-xs text-base-content/60">{req.createdAt ? new Date(req.createdAt).toLocaleDateString() : "-"}</div>
+                                </div>
+                            </div>
+
+                            <div className="mt-1 flex flex-col gap-2">
+                                <button
+                                    type="button"
+                                    className="btn btn-sm w-full"
+                                    onClick={() => handleApprove(req._id)}
+                                    disabled={req.status === "accepted" || approveMutation.isPending || rejectMutation.isPending || !limitData?.canAdd}
+                                >
+                                    Approve
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline w-full"
+                                    onClick={() => handleReject(req._id)}
+                                    disabled={req.status === "rejected" || approveMutation.isPending || rejectMutation.isPending}
+                                >
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
         </DashboardLayout>
     );

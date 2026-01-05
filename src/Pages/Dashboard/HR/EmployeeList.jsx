@@ -44,7 +44,7 @@ const EmployeeList = () => {
             if (res.success) {
                 toast.success('Employee removed from team successfully!');
                 queryClient.invalidateQueries({ queryKey: ['employees'] });
-                // Also invalidate profile to update employee count
+                // Invalidate profile
                 queryClient.invalidateQueries({ queryKey: ['profile'] });
                 setRemovingId(null);
             } else {
@@ -57,7 +57,7 @@ const EmployeeList = () => {
     const assignMutation = useMutation({
         mutationFn: ({ assetId, email }) => assignAssetManual(assetId, email),
         onMutate: async ({ assetId }) => {
-            // Optimistically decrement availableQuantity for assetId in cached assets lists
+            // Optimistic decrement
             await queryClient.cancelQueries(['assets']);
             queryClient.setQueriesData({ predicate: d => d.queryKey && d.queryKey[0] === 'assets' }, (old) => {
                 if (!old) return old;
@@ -82,10 +82,10 @@ const EmployeeList = () => {
         },
         onError: (err) => {
             toast.error(err?.message || 'Failed to assign asset');
-            // Let settled invalidation refresh correct values
+            // Settled refresh
         },
         onSettled: () => {
-            // Ensure assets list is refetched to reflect latest quantities
+            // Refetch assets
             queryClient.invalidateQueries(['assets']);
             queryClient.invalidateQueries(['available-assets']);
         }
@@ -95,10 +95,10 @@ const EmployeeList = () => {
     const { data: availableAssets = [] } = useQuery({
         queryKey: ['available-assets'],
         queryFn: async () => {
-            // Fetch a larger page size so all assets appear in the assign modal
+            // Fetch more assets
             const res = await getAssets(1, 1000, '', 'all', '');
             const list = res.data?.data || [];
-            // sort alphabetically for easier selection
+            // Sort alphabetically
             return list.sort((a, b) => (a.productName || a.name || '').localeCompare(b.productName || b.name || ''));
         },
         enabled: !!assigningTo

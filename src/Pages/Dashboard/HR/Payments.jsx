@@ -41,11 +41,14 @@ const Payments = () => {
     // Verify session
     const { refetchProfile } = useAuth();
 
+    const [verifyError, setVerifyError] = useState('');
+
     useEffect(() => {
         if (!sessionId || isVerifying) return;
 
         const verifyAndRefetch = async () => {
             setIsVerifying(true);
+            setVerifyError('');
             try {
                 const result = await verifyPaymentSession(sessionId);
 
@@ -65,11 +68,13 @@ const Payments = () => {
                     setShowSuccessNotification(true);
                 } else {
                     console.error('Payment verification failed:', result.error);
+                    setVerifyError(result.error || 'Payment verification failed');
                     // Verification failed
                     setSearchParams({});
                 }
             } catch (error) {
                 console.error('Error verifying session:', error);
+                setVerifyError(error?.message || 'Error verifying payment');
             } finally {
                 setIsVerifying(false);
             }
@@ -98,6 +103,18 @@ const Payments = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <span className="font-semibold">Payment Successful! Your package has been upgraded.</span>
+                    </div>
+                </div>
+            )}
+
+            {verifyError && (
+                <div className="alert alert-error shadow-lg mb-6">
+                    <div>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2 4 4M6 18a9 9 0 1118 0 9 9 0 01-18 0z" />
+                        </svg>
+                        <span className="font-semibold">Payment verification failed:</span>
+                        <span className="block mt-1">{verifyError}</span>
                     </div>
                 </div>
             )}
